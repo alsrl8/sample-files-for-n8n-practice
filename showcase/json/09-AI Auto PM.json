@@ -1,0 +1,484 @@
+{
+  "updatedAt": "2026-05-21T04:55:48.660Z",
+  "createdAt": "2026-05-20T09:05:36.200Z",
+  "id": "qnMsOWJHXiA6Sgxv",
+  "name": "[콜마교육] #09 AI Auto PM",
+  "description": "Form으로 변경사항 접수 후 마일스톤 Excel과 예산 Excel을 교차 분석하여 일정 지연/예산 시나리오를 Teams로 전송",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "AI Auto PM - 변경사항 입력",
+        "formDescription": "프로젝트 변경사항을 입력하면 마일스톤과 예산을 교차 분석합니다.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "변경사항 내용",
+              "fieldType": "textarea",
+              "fieldName": "변경사항_내용",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "프로젝트 코드",
+              "fieldName": "프로젝트코드",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3aba546f-9d6c-4b50-b5bf-bcfc4a181328",
+      "name": "PM 변경사항 입력 폼",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -80,
+        112
+      ],
+      "webhookId": "37ea6138-914b-4128-a231-11a1bbfd36cf"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path-milestone'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "76859777-579d-42e2-971d-33c20f6a1f5b",
+      "name": "마일스톤 Excel 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "7bbf6bed-ce2c-466b-b30f-4827f51a32ae",
+      "name": "마일스톤 데이터 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        16
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7a43aaf3-13c7-4f69-8f1f-f4e4c34e15e1",
+      "name": "마일스톤+예산 병합",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path-budget'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "3e494308-3973-4cde-ab03-914e5855f11a",
+      "name": "예산 Excel 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "d573064e-8752-4895-b89f-e7dc7216bed7",
+      "name": "예산 데이터 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=프로젝트코드: {{ $(\"PM 변경사항 입력 폼\").item.json[\"프로젝트코드\"] }}\n변경사항: {{ $(\"PM 변경사항 입력 폼\").item.json[\"변경사항_내용\"] }}\n\n아래 마일스톤+예산 데이터를 교차 분석해줘:\n{{ JSON.stringify($json.data) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 프로젝트 관리 전문 AI입니다. 마일스톤 진행률과 예산 집행률을 교차 분석하여 일정 지연 여부를 판단하고, 예산 시나리오를 제시합니다. Calculator 도구를 사용하여 정확한 수치 계산을 수행하세요. teams_message 필드에는 Microsoft Teams에 전송할 요약 보고서를 작성하세요."
+        }
+      },
+      "id": "714c478b-bfa0-467e-88a0-6ce57925c5fb",
+      "name": "PM 교차분석 Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1320,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "4075d2e7-86cc-43a9-8edd-b80efc418f1d",
+      "name": "xAI Grok 모델",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        336
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "fb0c2920-b1cb-4352-b9f9-d608afc92798",
+      "name": "Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"project_code\": \"PRJ-001\", \"schedule_status\": \"지연\", \"budget_status\": \"정상\", \"risk_level\": \"높음\", \"recommendation\": \"일정 조정 필요\", \"teams_message\": \"프로젝트 PM 분석 보고서\" }"
+      },
+      "id": "62a5c702-bdeb-4327-a2b2-5d19b0ddc2ef",
+      "name": "PM 분석 결과 파서",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "={{ $json.output.teams_message }}",
+        "otherOptions": {}
+      },
+      "id": "441c09f0-40a0-4a4c-88b5-e50bb2612662",
+      "name": "Teams 알림 전송",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1728,
+        112
+      ],
+      "webhookId": "8ebaacbd-1869-4f85-a0ca-96bb2efff136",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "eb152f3d-e526-421a-9175-6ac593ea1363",
+              "name": "file-path-milestone",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/qnMsOWJHXiA6Sgxv-AI-Auto-PM/source1-마일스톤.xlsx",
+              "type": "string"
+            },
+            {
+              "id": "efb361a7-e54e-4682-a008-ed57b6fb233d",
+              "name": "file-path-budget",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/qnMsOWJHXiA6Sgxv-AI-Auto-PM/source2-예산.xlsx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "31343f88-f772-4b35-98aa-4b0f05d1f1d1",
+      "name": "파일 경로 설정",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. 데이터 수집\n트리거 → 파일 경로 설정 → 2개 소스 병렬 읽기 → 병합",
+        "height": 400,
+        "width": 1220,
+        "color": 4
+      },
+      "id": "3c77331d-e412-4080-be96-c7fa977edd28",
+      "name": "Sticky Note03d8",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -74,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분석\nAI Agent가 두 데이터셋을 교차 분석",
+        "height": 464,
+        "width": 404,
+        "color": 2
+      },
+      "id": "b70a4ac8-a9bf-4750-9e28-61c1d2c1c40b",
+      "name": "Sticky Note2414",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1230,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 결과 전달\nSlack/파일로 결과 전달",
+        "height": 256,
+        "width": 252,
+        "color": 5
+      },
+      "id": "83de2553-b3a3-4eef-8cb4-0432e02f74fe",
+      "name": "Sticky Note6012",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "a56ab561-aac4-4033-9b94-e5be9138111b",
+      "name": "데이터 집계",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        112
+      ]
+    }
+  ],
+  "connections": {
+    "PM 변경사항 입력 폼": {
+      "main": [
+        [
+          {
+            "node": "파일 경로 설정",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "마일스톤 Excel 읽기": {
+      "main": [
+        [
+          {
+            "node": "마일스톤 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "마일스톤 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "마일스톤+예산 병합",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "마일스톤+예산 병합": {
+      "main": [
+        [
+          {
+            "node": "데이터 집계",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "예산 Excel 읽기": {
+      "main": [
+        [
+          {
+            "node": "예산 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "예산 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "마일스톤+예산 병합",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "PM 교차분석 Agent": {
+      "main": [
+        [
+          {
+            "node": "Teams 알림 전송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "PM 교차분석 Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PM 분석 결과 파서": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "PM 교차분석 Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok 모델": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "PM 교차분석 Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "파일 경로 설정": {
+      "main": [
+        [
+          {
+            "node": "마일스톤 Excel 읽기",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "예산 Excel 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터 집계": {
+      "main": [
+        [
+          {
+            "node": "PM 교차분석 Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "080d8a01-9205-4c67-a743-9617583dcf2a",
+  "activeVersionId": null,
+  "versionCounter": 10,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:05:36.200Z",
+      "createdAt": "2026-05-20T09:05:36.200Z",
+      "role": "workflow:owner",
+      "workflowId": "qnMsOWJHXiA6Sgxv",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

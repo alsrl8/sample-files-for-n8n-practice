@@ -1,0 +1,457 @@
+{
+  "updatedAt": "2026-05-21T04:54:16.011Z",
+  "createdAt": "2026-05-20T09:05:19.529Z",
+  "id": "pFmmOMOf8GqarHMw",
+  "name": "[콜마교육] #28 자재 특이사항 조회",
+  "description": "폼에서 자재코드를 입력받아 검사결과/특이사항이력 Excel을 AI로 분석하고 Teams 채널에 요약을 전송한다.",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "자재 특이사항 조회",
+        "formDescription": "자재코드를 입력하면 검사결과와 특이사항이력을 종합 분석합니다.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "자재코드",
+              "fieldName": "자재코드",
+              "placeholder": "자재코드를 입력하세요",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ed7b7c86-56d7-49e6-bf8a-d453b1c3e3c2",
+      "name": "자재코드 입력 폼",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -80,
+        112
+      ],
+      "webhookId": "075cf51e-b835-440b-8084-41f76a18c834"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path-inspection'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "6c6373e2-9ee8-4029-b120-84d551040519",
+      "name": "검사결과 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "f5388f93-f44b-4105-9c0e-a63395228464",
+      "name": "검사결과 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        16
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7b440d61-b5f2-41ab-91a8-96db9fd45929",
+      "name": "검사+이력 병합",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path-history'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "8a91ac36-88d5-4d9a-b514-c7ec4125418f",
+      "name": "특이사항이력 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "6d0e1d68-401a-43b5-88dc-90c8f3e80720",
+      "name": "특이사항이력 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=자재코드 {{ $(\"Material Code Form\").item.json[\"자재코드\"] }}에 대한 검사결과와 특이사항이력을 분석하라.\n\n데이터:\n{{ JSON.stringify($json.data) }}\n\n분석 항목:\n1. 해당 자재코드의 검사결과 요약 (inspection_summary)\n2. 특이사항 이력 정리 (issue_history)\n3. 종합 판단 및 권고사항 (recommendation)\n4. Teams 채널에 공유할 요약 메시지 (teams_message)",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "자재 품질 분석 전문가. 검사결과와 특이사항이력을 종합하여 자재의 품질 상태를 분석하고 권고사항을 제시한다."
+        }
+      },
+      "id": "6d69c138-3fbb-41ce-b116-01ab44c320af",
+      "name": "자재 분석 AI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1200,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "cd1acde1-cd88-41b3-8baf-ffef7732f970",
+      "name": "xAI Grok Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        320
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"material_code\": \"MAT-001\", \"inspection_summary\": \"최근 3회 검사 모두 합격\", \"issue_history\": \"2건의 색상 불량 이력\", \"recommendation\": \"현재 품질 양호, 색상 관련 추가 모니터링 권장\", \"teams_message\": \"자재 MAT-001 조회 결과: 검사 합격, 색상 불량 이력 2건, 추가 모니터링 권장\" }"
+      },
+      "id": "d5403714-15c7-437c-a0c6-c08b7f38bc4f",
+      "name": "분석 결과 파서",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1424,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "={{ $json.output.teams_message }}",
+        "otherOptions": {}
+      },
+      "id": "4a909201-479d-4b7a-bdec-0bc8e710d689",
+      "name": "Slack 결과 전송",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1552,
+        112
+      ],
+      "webhookId": "79081178-2d72-4b67-926d-be9910446940",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de17bb32-c886-435d-826e-778a81677ff9",
+              "name": "file-path-inspection",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/pFmmOMOf8GqarHMw-자재-특이사항-조회/source1-검사결과.xlsx",
+              "type": "string"
+            },
+            {
+              "id": "428399ad-43d7-46a3-b54b-b387225a62aa",
+              "name": "file-path-history",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/pFmmOMOf8GqarHMw-자재-특이사항-조회/source2-특이사항이력.xlsx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3742b621-b2a2-4ed5-a078-8beb2812b360",
+      "name": "파일 경로 설정",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. 데이터 수집\n트리거 → 파일 경로 설정 → 2개 소스 병렬 읽기 → 병합",
+        "height": 432,
+        "width": 1220,
+        "color": 4
+      },
+      "id": "4596c0aa-a040-4f79-bbdb-7bb3aa781275",
+      "name": "Sticky Note63a1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분석\nAI Agent가 두 데이터셋을 교차 분석",
+        "height": 512,
+        "width": 420,
+        "color": 2
+      },
+      "id": "1212c567-f031-476f-972c-54d75ae50812",
+      "name": "Sticky Note2a0d",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 결과 전달\nSlack/파일로 결과 전달",
+        "height": 352,
+        "width": 172,
+        "color": 5
+      },
+      "id": "d4f28600-4321-4f1a-913d-24bf7b38c986",
+      "name": "Sticky Note5a58",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "3ec34e6d-f231-4a4c-9ec6-519a4404d395",
+      "name": "데이터 집계",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        976,
+        112
+      ]
+    }
+  ],
+  "connections": {
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "자재 분석 AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "자재코드 입력 폼": {
+      "main": [
+        [
+          {
+            "node": "파일 경로 설정",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "검사결과 읽기": {
+      "main": [
+        [
+          {
+            "node": "검사결과 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "검사결과 추출": {
+      "main": [
+        [
+          {
+            "node": "검사+이력 병합",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "검사+이력 병합": {
+      "main": [
+        [
+          {
+            "node": "데이터 집계",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "특이사항이력 읽기": {
+      "main": [
+        [
+          {
+            "node": "특이사항이력 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "특이사항이력 추출": {
+      "main": [
+        [
+          {
+            "node": "검사+이력 병합",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "자재 분석 AI": {
+      "main": [
+        [
+          {
+            "node": "Slack 결과 전송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "분석 결과 파서": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "자재 분석 AI",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "파일 경로 설정": {
+      "main": [
+        [
+          {
+            "node": "검사결과 읽기",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "특이사항이력 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터 집계": {
+      "main": [
+        [
+          {
+            "node": "자재 분석 AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "bacb450e-56ac-4efc-9d1f-468927829847",
+  "activeVersionId": null,
+  "versionCounter": 12,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:05:19.529Z",
+      "createdAt": "2026-05-20T09:05:19.529Z",
+      "role": "workflow:owner",
+      "workflowId": "pFmmOMOf8GqarHMw",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,428 @@
+{
+  "updatedAt": "2026-05-21T04:56:08.917Z",
+  "createdAt": "2026-05-20T09:04:05.230Z",
+  "id": "vR0K5avvuQEvnELW",
+  "name": "[콜마교육] #29 협력사 실적 진도관리",
+  "description": "매일 오전 협력사 목표 대비 달성률을 분석하여 기준 미달 시 알림 메일 발송",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "f8a27b4b-bdfb-4e97-a0bd-f9e0777033e2",
+      "name": "매일 오전",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "adc10503-ebaa-43a5-86fb-9a3581beb6f7",
+      "name": "실적 파일 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "616bd056-57fa-4b6b-9ad3-3ba53a6be35f",
+      "name": "엑셀 데이터 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 협력사 실적 데이터를 분석하여 목표 대비 달성률을 계산하고 기준 미달 협력사를 식별해라.\n오늘 날짜: {{ $now.toFormat(\"yyyy-MM-dd\") }}\n\n데이터:\n{{ JSON.stringify($json.data) }}\n\n분석 기준:\n- 달성률 = 실적 / 목표 * 100\n- 기준 미달: 달성률이 기준달성률 미만인 협력사\n\nalert_needed: 기준 미달 협력사가 1곳 이상이면 true\nemail_body: HTML 형식, 전체 협력사 달성률 표 + 기준 미달 협력사 강조",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 협력사 실적 관리 전문가입니다. Calculator 도구를 사용하여 달성률을 정확히 계산하세요."
+        }
+      },
+      "id": "984fe682-3c77-41ce-91b2-11c5e8c235ab",
+      "name": "실적 분석 AI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1096,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "ce983790-80a2-4719-8f24-b56a0a1e1465",
+      "name": "xAI Grok Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        336
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "e3e8e22b-a7d5-4909-8e8f-7b7dd232b2d1",
+      "name": "Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"alert_needed\": true, \"summary\": \"기준 미달 협력사 2곳 식별\", \"email_subject\": \"[협력사] 실적 진도 알림\", \"email_body\": \"<p>기준 미달 협력사 현황...</p>\" }"
+      },
+      "id": "0695e44f-1de4-4573-842d-f2a36fd6312c",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1296,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output.alert_needed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "300b6045-8159-4498-a109-8d066f9d52e9",
+      "name": "알림 필요 여부",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "={{ $json.output.email_subject }}\n\n{{ $json.output.email_body }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "a7c4041f-6e6f-4dc6-be10-f741a9c17c8e",
+      "name": "알림 메일 발송",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1728,
+        112
+      ],
+      "webhookId": "18cb5552-e959-4d0c-90bb-5cb6a33bc58e",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1534ca65-107e-474c-8598-3ff570e9aeed",
+              "name": "file-path",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/vR0K5avvuQEvnELW-협력사-실적-진도관리.xlsx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "503296c9-41a5-40bb-9034-562b4645c0ad",
+      "name": "실적 파일 위치 가져오기",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "6de018a0-5032-41b5-ad05-9727edef581f",
+      "name": "데이터 집계",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+        "height": 272,
+        "width": 1060,
+        "color": 4
+      },
+      "id": "c8efdc29-b563-4e86-ae79-c0404682bac7",
+      "name": "Sticky Note7ca5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -114,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분석\nAI Agent가 데이터를 분석하고 구조화된 결과를 반환",
+        "height": 448,
+        "width": 404,
+        "color": 2
+      },
+      "id": "dc12ac5b-5afe-4759-b646-f742fcda5f51",
+      "name": "Sticky Notea36c",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1006,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 결과 전달\n조건 판단 후 Slack 채널로 알림 발송",
+        "height": 272,
+        "width": 360,
+        "color": 5
+      },
+      "id": "2b0dcb72-7549-40bf-bdf1-ec7b566f53a0",
+      "name": "Sticky Notef436",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        16
+      ]
+    }
+  ],
+  "connections": {
+    "매일 오전": {
+      "main": [
+        [
+          {
+            "node": "실적 파일 위치 가져오기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "실적 파일 읽기": {
+      "main": [
+        [
+          {
+            "node": "엑셀 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "엑셀 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "데이터 집계",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "실적 분석 AI": {
+      "main": [
+        [
+          {
+            "node": "알림 필요 여부",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "실적 분석 AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "실적 분석 AI",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "실적 분석 AI",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "알림 필요 여부": {
+      "main": [
+        [
+          {
+            "node": "알림 메일 발송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "실적 파일 위치 가져오기": {
+      "main": [
+        [
+          {
+            "node": "실적 파일 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터 집계": {
+      "main": [
+        [
+          {
+            "node": "실적 분석 AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "3e05ffef-18ef-4e08-b240-30335b08f86e",
+  "activeVersionId": null,
+  "versionCounter": 9,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:04:05.230Z",
+      "createdAt": "2026-05-20T09:04:05.230Z",
+      "role": "workflow:owner",
+      "workflowId": "vR0K5avvuQEvnELW",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

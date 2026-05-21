@@ -1,0 +1,428 @@
+{
+  "updatedAt": "2026-05-21T04:58:26.655Z",
+  "createdAt": "2026-05-20T09:04:51.839Z",
+  "id": "R2ZgAHiwptX74GZf",
+  "name": "[콜마교육] #03 초도생산 출장일정 관리",
+  "description": "매일 생산계획표 Excel을 읽어 AI가 이전 대비 변경 항목을 식별하고, 변경 시 Gmail로 알림을 발송한다.",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "3209a60b-e802-416c-ae2b-eb57151837ee",
+      "name": "매일 실행",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "38f4d20e-ca95-41b2-81d7-520dfc4e1dfc",
+      "name": "생산계획표 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "headerRow": true
+        }
+      },
+      "id": "f92909c9-9fb6-45ec-8d85-19745b8904d4",
+      "name": "Excel 데이터 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 생산계획표 데이터를 분석하여 이전 대비 변경된 항목을 찾아라. 변경이 있으면 alert_needed를 true로, 없으면 false로 설정하라.\n\n데이터:\n{{ JSON.stringify($json.data) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 콜마교육 초도생산 출장일정 관리 전문가입니다. 생산계획표 데이터에서 이전 대비 변경된 항목(일정 변경, 수량 변경, 신규 추가, 삭제 등)을 정확히 식별하고, 관련 담당자에게 보낼 알림 이메일을 작성합니다."
+        }
+      },
+      "id": "5f90863d-1e9b-4a82-a20d-12ee85dacb8f",
+      "name": "생산계획 변경 분석",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1096,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "de9d7e28-c408-4d42-9d8c-71779536fdb3",
+      "name": "xAI Grok Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        336
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "441b3d06-d96e-41ab-a5a7-7d945093a438",
+      "name": "Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"alert_needed\": true, \"summary\": \"변경 항목 요약\", \"email_subject\": \"알림 제목\", \"email_body\": \"알림 본문\" }"
+      },
+      "id": "57bfccd4-358f-4138-8eb5-1e4421cb8958",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1296,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output.alert_needed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "10b246bd-5717-4b91-ae71-b9ec587228c2",
+      "name": "알림 필요 여부",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=*{{ $json.output.email_subject }}*\n{{ $json.output.email_body }}",
+        "otherOptions": {}
+      },
+      "id": "10725aac-858b-4034-bde8-1e385e3b23b8",
+      "name": "변경 알림 발송",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1728,
+        112
+      ],
+      "webhookId": "0d1f23ed-9a1d-460a-9564-b6a74a0bbf42",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "13dd3154-87bd-4a0d-84ea-3598d1b2fa39",
+              "name": "file-path",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/R2ZgAHiwptX74GZf-초도생산-출장일정-관리.xlsx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "acb569c0-a5de-4f01-a647-690fc5bfa624",
+      "name": "생산계획표 위치 가져오기",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "f335158b-9171-4c74-a175-4224a525ef7d",
+      "name": "데이터 집계",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+        "height": 256,
+        "width": 1060,
+        "color": 4
+      },
+      "id": "abbbf0d4-cba1-4033-94d5-59a81d76e4c3",
+      "name": "Sticky Note1e87",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -114,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분석\nAI Agent가 데이터를 분석하고 구조화된 결과를 반환",
+        "height": 464,
+        "width": 388,
+        "color": 2
+      },
+      "id": "f151ced9-5087-48af-ad32-460b14034e42",
+      "name": "Sticky Notea5cb",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1014,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 결과 전달\n조건 판단 후 Slack 채널로 알림 발송",
+        "height": 256,
+        "width": 360,
+        "color": 5
+      },
+      "id": "aafc80eb-e68b-4f13-bf4a-e18652adc0b9",
+      "name": "Sticky Note3de0",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        16
+      ]
+    }
+  ],
+  "connections": {
+    "매일 실행": {
+      "main": [
+        [
+          {
+            "node": "생산계획표 위치 가져오기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "생산계획표 읽기": {
+      "main": [
+        [
+          {
+            "node": "Excel 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Excel 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "데이터 집계",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "생산계획 변경 분석": {
+      "main": [
+        [
+          {
+            "node": "알림 필요 여부",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "생산계획 변경 분석",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "생산계획 변경 분석",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "생산계획 변경 분석",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "알림 필요 여부": {
+      "main": [
+        [
+          {
+            "node": "변경 알림 발송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "생산계획표 위치 가져오기": {
+      "main": [
+        [
+          {
+            "node": "생산계획표 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터 집계": {
+      "main": [
+        [
+          {
+            "node": "생산계획 변경 분석",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "645e0920-c603-4df4-9911-cdb85bf82bc1",
+  "activeVersionId": null,
+  "versionCounter": 14,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:04:51.839Z",
+      "createdAt": "2026-05-20T09:04:51.839Z",
+      "role": "workflow:owner",
+      "workflowId": "R2ZgAHiwptX74GZf",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,515 @@
+{
+    "updatedAt": "2026-05-21T04:55:18.251Z",
+    "createdAt": "2026-05-20T09:05:57.443Z",
+    "id": "pzRDhKnRQQp7q14z",
+    "name": "[\ucf5c\ub9c8\uad50\uc721] #13 AI \uae30\ubc18 \uc0dd\uc0b0\uc900\ube44 \ucd5c\uc801\ud654",
+    "description": "\ub9e4\uc77c BOM \uc18c\uc694\ub7c9\uacfc \uc7ac\uace0\ud604\ud669 Excel\uc744 \uad50\ucc28 \ubd84\uc11d\ud558\uc5ec \ubd80\uc871 \uc790\uc7ac \ubc1c\uacac \uc2dc Gmail\ub85c \uc54c\ub9bc \uc804\uc1a1",
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 8
+                        }
+                    ]
+                }
+            },
+            "id": "7fe1930d-b96f-4b59-af21-563f7f6ccd14",
+            "name": "\ub9e4\uc77c \uc2e4\ud589",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.3,
+            "position": [
+                -80,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $json['file-path-bom'] }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file"
+                        }
+                    }
+                }
+            },
+            "id": "dce26a68-45fb-419d-914a-75626e1845af",
+            "name": "BOM \uc18c\uc694\ub7c9 Excel \uc77d\uae30",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                368,
+                16
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "xlsx",
+                "options": {}
+            },
+            "id": "66e6e13c-0c24-40a5-a2f2-3dca26b4d4c8",
+            "name": "BOM \ub370\uc774\ud130 \ucd94\ucd9c",
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1.1,
+            "position": [
+                592,
+                16
+            ]
+        },
+        {
+            "parameters": {},
+            "id": "6947c768-81cb-4af0-be4d-276eba9eca51",
+            "name": "BOM+\uc7ac\uace0 \ubcd1\ud569",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                816,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $json['file-path-inventory'] }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file"
+                        }
+                    }
+                }
+            },
+            "id": "65ba7bc0-bb29-4bb3-b8fd-40d4538b200f",
+            "name": "\uc7ac\uace0\ud604\ud669 Excel \uc77d\uae30",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                368,
+                208
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "xlsx",
+                "options": {}
+            },
+            "id": "a470bc68-3c5c-4c3c-9f6b-af4ea4afa3bf",
+            "name": "\uc7ac\uace0 \ub370\uc774\ud130 \ucd94\ucd9c",
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1.1,
+            "position": [
+                592,
+                208
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=\uc544\ub798 BOM \uc18c\uc694\ub7c9\uacfc \uc7ac\uace0\ud604\ud669 \ub370\uc774\ud130\ub97c \uc790\uc7ac\ucf54\ub4dc \uae30\uc900\uc73c\ub85c \uad50\ucc28 \ubd84\uc11d\ud574\uc918:\n{{ JSON.stringify($json.data) }}",
+                "hasOutputParser": true,
+                "options": {
+                    "systemMessage": "\ub2f9\uc2e0\uc740 \uc0dd\uc0b0\uc900\ube44 \ucd5c\uc801\ud654 \uc804\ubb38 AI\uc785\ub2c8\ub2e4. \uc790\uc7ac\ucf54\ub4dc\ub97c \uae30\uc900\uc73c\ub85c BOM \uc18c\uc694\ub7c9\uacfc \ud604\uc7ac\uace0\ub97c \uad50\ucc28 \ubd84\uc11d\ud558\uc5ec \ubd80\uc871/\uc8fc\uc758/\uc815\uc0c1\uc73c\ub85c \ubd84\ub958\ud569\ub2c8\ub2e4. Calculator \ub3c4\uad6c\ub97c \uc0ac\uc6a9\ud558\uc5ec \uc815\ud655\ud55c \uc218\uce58 \uacc4\uc0b0\uc744 \uc218\ud589\ud558\uc138\uc694. \ubd80\uc871: \ud604\uc7ac\uace0 < \uc18c\uc694\ub7c9, \uc8fc\uc758: \ud604\uc7ac\uace0 < \uc18c\uc694\ub7c9*1.2, \uc815\uc0c1: \uadf8 \uc678. alert_needed\ub294 \ubd80\uc871 \ud56d\ubaa9\uc774 1\uac1c \uc774\uc0c1\uc774\uba74 true. email_subject\uc640 email_body\uc5d0 \uc54c\ub9bc \uc774\uba54\uc77c \ub0b4\uc6a9\uc744 \uc791\uc131\ud558\uc138\uc694."
+                }
+            },
+            "id": "252f90ce-a826-4e21-b3ac-6b565d546b88",
+            "name": "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3.1,
+            "position": [
+                1320,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "model": "grok-4.3",
+                "options": {}
+            },
+            "id": "f77ea79c-499b-4859-af7a-992cbecedc74",
+            "name": "xAI Grok \ubaa8\ub378",
+            "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+            "typeVersion": 1,
+            "position": [
+                1264,
+                336
+            ],
+            "credentials": {
+                "xAiApi": {
+                    "id": "gkMJxwUMH039B4V0",
+                    "name": "xAi mingi4754song private"
+                }
+            }
+        },
+        {
+            "parameters": {},
+            "id": "7ae117db-9e02-4d73-a224-99e37a56b198",
+            "name": "Calculator",
+            "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+            "typeVersion": 1,
+            "position": [
+                1392,
+                336
+            ]
+        },
+        {
+            "parameters": {
+                "jsonSchemaExample": "{ \"alert_needed\": true, \"shortage_items\": [{\"material_code\": \"MAT-001\", \"shortage_qty\": 500}], \"warning_items\": [{\"material_code\": \"MAT-002\", \"remaining_days\": 3}], \"email_subject\": \"[\uc0dd\uc0b0\uc900\ube44] \uc790\uc7ac \ubd80\uc871 \uc54c\ub9bc\", \"email_body\": \"\ubd80\uc871 \uc790\uc7ac \ubaa9\ub85d...\" }"
+            },
+            "id": "0e95dd3a-71f0-4b78-8019-809e60ed8377",
+            "name": "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d \ud30c\uc11c",
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+            "typeVersion": 1.3,
+            "position": [
+                1520,
+                336
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 3
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.output.alert_needed }}",
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            },
+                            "id": "cd0224fd-39af-4fb5-b1d5-0075622a1abd"
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "786bf08a-91f3-4ceb-a4d0-8c51413aa973",
+            "name": "\uc54c\ub9bc \ud544\uc694 \uc5ec\ubd80 \ud655\uc778",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.3,
+            "position": [
+                1728,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "select": "channel",
+                "channelId": {
+                    "__rl": true,
+                    "value": "C0AM96C1G10",
+                    "mode": "list",
+                    "cachedResultName": "miles-test"
+                },
+                "text": "={{ $(\"\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent\").item.json.output.email_subject }}\n\n{{ $(\"\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent\").item.json.output.email_body }}",
+                "otherOptions": {}
+            },
+            "id": "2ffbbab8-6b7f-4ed0-ad46-b0cf1e54cdf6",
+            "name": "\ubd80\uc871 \uc54c\ub9bc \uc774\uba54\uc77c \uc804\uc1a1",
+            "type": "n8n-nodes-base.slack",
+            "typeVersion": 2.4,
+            "position": [
+                1952,
+                112
+            ],
+            "webhookId": "943f63c2-e2e3-4863-90bb-5fa883452d09",
+            "credentials": {
+                "slackApi": {
+                    "id": "uMdzErNvUxaoML3G",
+                    "name": "Slack miles-bot"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "9955e2df-feaf-45e9-a4fd-287ba4dd4e68",
+                            "name": "file-path-bom",
+                            "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/pzRDhKnRQQp7q14z-\uc0dd\uc0b0\uc900\ube44-\ucd5c\uc801\ud654/source1-bom\uc18c\uc694\ub7c9.xlsx",
+                            "type": "string"
+                        },
+                        {
+                            "id": "f0938008-a588-42b5-b354-abf25618a3ec",
+                            "name": "file-path-inventory",
+                            "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/pzRDhKnRQQp7q14z-\uc0dd\uc0b0\uc900\ube44-\ucd5c\uc801\ud654/source2-\uc7ac\uace0\ud604\ud669.xlsx",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "b7d8075e-1b1c-4d4e-b988-05f46ad12c20",
+            "name": "\ud30c\uc77c \uacbd\ub85c \uc124\uc815",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                144,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## 1. \ub370\uc774\ud130 \uc218\uc9d1\n\ud2b8\ub9ac\uac70 \u2192 \ud30c\uc77c \uacbd\ub85c \uc124\uc815 \u2192 2\uac1c \uc18c\uc2a4 \ubcd1\ub82c \uc77d\uae30 \u2192 \ubcd1\ud569",
+                "height": 368,
+                "width": 1220,
+                "color": 4
+            },
+            "id": "3a3684a7-858b-4a48-b9a2-d04d245e1af7",
+            "name": "Sticky Note4247",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                -82,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## 2. AI \ubd84\uc11d\nAI Agent\uac00 \ub450 \ub370\uc774\ud130\uc14b\uc744 \uad50\ucc28 \ubd84\uc11d",
+                "height": 448,
+                "width": 404,
+                "color": 2
+            },
+            "id": "9c720c1f-355f-42b8-abf4-d7731b1a9800",
+            "name": "Sticky Note9adf",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                1230,
+                32
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## 3. \uacb0\uacfc \uc804\ub2ec\n\uc870\uac74 \ud310\ub2e8 \ud6c4 Slack/\ud30c\uc77c\ub85c \uacb0\uacfc \uc804\ub2ec",
+                "height": 288,
+                "width": 368,
+                "color": 5
+            },
+            "id": "a4dc2ba8-4928-48ba-93a7-3c3a35436179",
+            "name": "Sticky Noteeac2",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                1704,
+                -16
+            ]
+        },
+        {
+            "parameters": {
+                "aggregate": "aggregateAllItemData",
+                "options": {}
+            },
+            "id": "417a51d8-64e5-44ae-9862-9e25b9bae1f1",
+            "name": "\ub370\uc774\ud130 \uc9d1\uacc4",
+            "type": "n8n-nodes-base.aggregate",
+            "typeVersion": 1,
+            "position": [
+                1040,
+                112
+            ]
+        }
+    ],
+    "connections": {
+        "\ub9e4\uc77c \uc2e4\ud589": {
+            "main": [
+                [
+                    {
+                        "node": "\ud30c\uc77c \uacbd\ub85c \uc124\uc815",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "BOM \uc18c\uc694\ub7c9 Excel \uc77d\uae30": {
+            "main": [
+                [
+                    {
+                        "node": "BOM \ub370\uc774\ud130 \ucd94\ucd9c",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "BOM \ub370\uc774\ud130 \ucd94\ucd9c": {
+            "main": [
+                [
+                    {
+                        "node": "BOM+\uc7ac\uace0 \ubcd1\ud569",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "BOM+\uc7ac\uace0 \ubcd1\ud569": {
+            "main": [
+                [
+                    {
+                        "node": "\ub370\uc774\ud130 \uc9d1\uacc4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc7ac\uace0\ud604\ud669 Excel \uc77d\uae30": {
+            "main": [
+                [
+                    {
+                        "node": "\uc7ac\uace0 \ub370\uc774\ud130 \ucd94\ucd9c",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc7ac\uace0 \ub370\uc774\ud130 \ucd94\ucd9c": {
+            "main": [
+                [
+                    {
+                        "node": "BOM+\uc7ac\uace0 \ubcd1\ud569",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent": {
+            "main": [
+                [
+                    {
+                        "node": "\uc54c\ub9bc \ud544\uc694 \uc5ec\ubd80 \ud655\uc778",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Calculator": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d \ud30c\uc11c": {
+            "ai_outputParser": [
+                [
+                    {
+                        "node": "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent",
+                        "type": "ai_outputParser",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc54c\ub9bc \ud544\uc694 \uc5ec\ubd80 \ud655\uc778": {
+            "main": [
+                [
+                    {
+                        "node": "\ubd80\uc871 \uc54c\ub9bc \uc774\uba54\uc77c \uc804\uc1a1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "xAI Grok \ubaa8\ub378": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\ud30c\uc77c \uacbd\ub85c \uc124\uc815": {
+            "main": [
+                [
+                    {
+                        "node": "BOM \uc18c\uc694\ub7c9 Excel \uc77d\uae30",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "\uc7ac\uace0\ud604\ud669 Excel \uc77d\uae30",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\ub370\uc774\ud130 \uc9d1\uacc4": {
+            "main": [
+                [
+                    {
+                        "node": "\uc0dd\uc0b0\uc900\ube44 \ubd84\uc11d Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "availableInMCP": true,
+        "binaryMode": "separate"
+    },
+    "staticData": null,
+    "meta": {
+        "aiBuilderAssisted": true,
+        "builderVariant": "mcp"
+    },
+    "pinData": {},
+    "versionId": "5de48ee7-bddc-471b-909f-f5c052890a08",
+    "activeVersionId": null,
+    "versionCounter": 14,
+    "triggerCount": 0,
+    "shared": [
+        {
+            "updatedAt": "2026-05-20T09:05:57.443Z",
+            "createdAt": "2026-05-20T09:05:57.443Z",
+            "role": "workflow:owner",
+            "workflowId": "pzRDhKnRQQp7q14z",
+            "projectId": "ncJWdNyuSg3UzANu",
+            "project": {
+                "updatedAt": "2026-04-15T05:07:55.862Z",
+                "createdAt": "2026-04-15T02:45:24.795Z",
+                "id": "ncJWdNyuSg3UzANu",
+                "name": "\ubbfc\uae30 \uc1a1 <miles@infograb.net>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+            }
+        }
+    ],
+    "tags": [
+        {
+            "updatedAt": "2026-05-21T02:30:41.851Z",
+            "createdAt": "2026-05-21T02:30:41.851Z",
+            "id": "zCqLTSWhITlFn4zB",
+            "name": "kolma-openlab"
+        }
+    ],
+    "activeVersion": null
+}

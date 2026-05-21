@@ -1,0 +1,405 @@
+{
+  "updatedAt": "2026-05-21T04:58:49.467Z",
+  "createdAt": "2026-05-20T09:03:43.866Z",
+  "id": "8cmMeATMODAEXpWt",
+  "name": "[콜마교육] #15 자산·계약 관리",
+  "description": "매일 계약 만료일 기준 D-30/D-7/D-day 자산을 분류하여 Slack 알림 발송",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "a48bcf57-9c41-4fcc-aeec-27a9119045e6",
+      "name": "매일 실행",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "50c3abc5-4e76-4696-9eb7-3042f2bb3b9f",
+      "name": "계약 파일 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "6f5b1ca9-5ea4-40a1-8a4d-4f23a713b26a",
+      "name": "엑셀 데이터 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "55589e44-d19e-4c92-9298-7a69dbfd311d",
+      "name": "데이터 집계",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 자산 계약 데이터를 분석하여 계약만료일 기준으로 분류해라.\n오늘 날짜: {{ $now.toFormat(\"yyyy-MM-dd\") }}\n\n데이터:\n{{ JSON.stringify($json.data) }}\n\n분류 기준:\n- D-30: 만료일까지 30일 이하\n- D-7: 만료일까지 7일 이하\n- D-day: 오늘이 만료일\n\nalert_needed: D-30/D-7/D-day 해당 항목이 1건 이상이면 true\nemail_body: HTML 형식, 각 분류별 표로 정리",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 자산 계약 관리 전문가입니다. 날짜 차이를 직접 계산하여 분류하세요."
+        }
+      },
+      "id": "7f915c0e-98e6-4107-a13b-bebb34e43ba7",
+      "name": "계약 만료 분석 AI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1040,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "d218c447-3dcf-40f7-9f70-a587d4ce4f1b",
+      "name": "xAI Grok Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        992,
+        336
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output.alert_needed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "id": "f7d67712-84bb-4d9f-b779-bc92ecaeccc0"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f2e8add4-9e1c-42c7-b107-d149c7713260",
+      "name": "알림 필요 여부",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1392,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=*{{ $json.output.email_subject }}*\n{{ $json.output.email_body }}",
+        "otherOptions": {}
+      },
+      "id": "c0957a36-45d3-4229-b92c-a00cd11368d0",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1616,
+        112
+      ],
+      "webhookId": "7d6aed3b-945f-4d1b-bd8d-39e7ed6e73b9",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "12e06293-c3a8-4c3a-b123-2570e4d0d820",
+              "name": "file-path",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/8cmMeATMODAEXpWt-자산-계약-관리.xlsx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        112
+      ],
+      "id": "c8441459-fee1-46b0-b00b-e39eb759a23e",
+      "name": "계약 파일 위치 가져오기"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"alert_needed\": true, \"summary\": \"계약 만료 임박 자산 3건\", \"email_subject\": \"[자산관리] 계약 만료 알림\", \"email_body\": \"<p>만료 임박 자산 목록...</p>\" }"
+      },
+      "id": "472e1d16-9275-413d-aa8b-72c14ef57a5c",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1176,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. 데이터 수집\n매일 자동 실행 →\n계약 대장 Excel 읽기",
+        "height": 280,
+        "width": 840,
+        "color": 4
+      },
+      "id": "37d9c4e6-b011-4bca-9586-5cfdcf4941cb",
+      "name": "Sticky Note S1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -108,
+        -8
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분석\n계약 만료 D-30/D-7/D-day\n판단 + Structured Output",
+        "height": 488,
+        "width": 520,
+        "color": 3
+      },
+      "id": "978f7a4a-2f1c-49a3-a68c-ef97c2fc23a2",
+      "name": "Sticky Note S2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -8
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 알림 전달\n알림 필요 시\nSlack 채널 알림",
+        "height": 280,
+        "width": 380,
+        "color": 6
+      },
+      "id": "3326d0cb-990c-4531-bf80-c826aa5e2b27",
+      "name": "Sticky Note S3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1362,
+        -8
+      ]
+    }
+  ],
+  "connections": {
+    "매일 실행": {
+      "main": [
+        [
+          {
+            "node": "계약 파일 위치 가져오기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "계약 파일 읽기": {
+      "main": [
+        [
+          {
+            "node": "엑셀 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "엑셀 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "데이터 집계",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터 집계": {
+      "main": [
+        [
+          {
+            "node": "계약 만료 분석 AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "계약 만료 분석 AI": {
+      "main": [
+        [
+          {
+            "node": "알림 필요 여부",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "계약 만료 분석 AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "알림 필요 여부": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "계약 파일 위치 가져오기": {
+      "main": [
+        [
+          {
+            "node": "계약 파일 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "계약 만료 분석 AI",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "a7f57ccf-c6a2-495f-afa5-f3612b891097",
+  "activeVersionId": null,
+  "versionCounter": 84,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:03:43.866Z",
+      "createdAt": "2026-05-20T09:03:43.866Z",
+      "role": "workflow:owner",
+      "workflowId": "8cmMeATMODAEXpWt",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

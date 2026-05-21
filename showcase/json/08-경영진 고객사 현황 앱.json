@@ -1,0 +1,404 @@
+{
+  "updatedAt": "2026-05-21T04:53:41.888Z",
+  "createdAt": "2026-05-20T09:04:30.125Z",
+  "id": "50ZqTbmQPLuALOPr",
+  "name": "[콜마교육] #08 경영진 고객사 현황 앱",
+  "description": "Form으로 미팅 보고를 입력받아 AI Agent가 고객사명 NER, 분류, 요약, 후속 조치를 추출하고 Gmail로 검증 요청을 발송한다.",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "경영진 고객사 현황 보고",
+        "formDescription": "미팅 보고 내용을 입력하면 AI가 자동 분석합니다.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "고객사명",
+              "fieldName": "customer_name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "미팅 유형",
+              "fieldType": "dropdown",
+              "fieldName": "meeting_type",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "정기 미팅"
+                  },
+                  {
+                    "option": "긴급 미팅"
+                  },
+                  {
+                    "option": "클레임 대응"
+                  },
+                  {
+                    "option": "계약 협의"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "미팅 보고 내용",
+              "fieldType": "textarea",
+              "fieldName": "meeting_report",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1d0e2fbf-2960-434c-8d1e-c50c691a4c18",
+      "name": "미팅 보고 입력",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        208
+      ],
+      "webhookId": "d470cd58-5e8d-41e0-bf54-d62cc5784ffb"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "44ee3b3e-2d59-4d0c-90fe-ec45245a9675",
+              "name": "customer",
+              "value": "={{ $json.customer_name }}",
+              "type": "string"
+            },
+            {
+              "id": "c09bd542-303f-4822-8bda-d722294dc611",
+              "name": "type",
+              "value": "={{ $json.meeting_type }}",
+              "type": "string"
+            },
+            {
+              "id": "100b775c-797b-40c4-8dcb-2c8699840862",
+              "name": "report",
+              "value": "={{ $json.meeting_report }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9456b754-7ebd-4459-b354-8351fe91059f",
+      "name": "입력 데이터 정리",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=고객사: {{ $json.customer }}\n미팅 유형: {{ $json.type }}\n\n보고 내용:\n{{ $json.report }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 경영진 미팅 보고를 분석하는 전문가입니다.\n\n작업:\n1. 고객사명을 표준화(정식 명칭)하세요.\n2. 미팅 내용을 분류하세요 (기술지원, 영업, 계약, 클레임, 기타).\n3. 핵심 내용을 1~2문장으로 요약하세요.\n4. 후속 조치 항목을 리스트로 정리하세요.\n5. 리스크 여부를 판단하세요 (클레임, 납기 지연, 비용 초과 등).\n\n반드시 지정된 JSON 형식으로 응답하세요."
+        }
+      },
+      "id": "4b700487-c96f-4a09-b9bb-c11bca620322",
+      "name": "고객사 분석 Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "383e5ae8-7f5d-46bf-8556-c49dddc00f4f",
+      "name": "xAI Grok 모델",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        448,
+        448
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"customer_name\": \"ABC Corp\", \"category\": \"기술지원\", \"summary\": \"고객사 기술 이슈 논의\", \"action_items\": [\"후속 미팅 일정 조율\"], \"risk_detected\": true, \"risk_detail\": \"클레임 발생\" }"
+      },
+      "id": "154fec4a-a8fa-494c-9b66-af10a5fae7f3",
+      "name": "분석 결과 파서",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "6b20ac5c-6e1f-4ba5-b88b-9d9f48289917",
+              "leftValue": "={{ $json.output.risk_detected }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6bf27697-d094-4734-a1a9-f2ae789cdfd4",
+      "name": "리스크 감지 여부",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        704,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=*[고객사 현황 보고]*\n\n*고객사:* {{ $json.output.customer_name }}\n*분류:* {{ $json.output.category }}\n*요약:* {{ $json.output.summary }}\n*후속 조치:*\n{{ $json.output.action_items.join('\\n• ') }}",
+        "otherOptions": {}
+      },
+      "id": "4a5db810-80b5-4821-89ba-1f6e42334ea9",
+      "name": "분석 결과 보고",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        960,
+        112
+      ],
+      "webhookId": "1f063508-2f1f-41f6-996f-83c143cbdb0a",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=:rotating_light: *[리스크 감지] {{ $json.output.customer_name }}*\n\n*분류:* {{ $json.output.category }}\n*리스크:* {{ $json.output.risk_detail }}\n*요약:* {{ $json.output.summary }}\n*즉시 조치 필요:*\n{{ $json.output.action_items.join('\\n• ') }}",
+        "otherOptions": {}
+      },
+      "id": "74e6ec47-672a-4014-b65d-b6feac418e1c",
+      "name": "긴급 리스크 알림",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        960,
+        304
+      ],
+      "webhookId": "b97c681a-1ff7-4fd9-b41a-520917d75bf3",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 1. 입력\n미팅 보고 폼 입력\n(고객사, 유형, 내용)",
+        "height": 276,
+        "width": 400,
+        "color": 4
+      },
+      "id": "a22ce9bb-7565-455e-8133-02c025ea175d",
+      "name": "Sticky Note 2a8a",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분석\n고객사 표준화, 분류,\n요약, 리스크 판단",
+        "height": 468,
+        "width": 404,
+        "color": 3
+      },
+      "id": "5feb23fd-ef5b-4a8e-bc1b-d8eb38a3e2dd",
+      "name": "Sticky Note 44ef",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        416,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 결과 전달\n리스크 감지 시 긴급 알림\n일반 건은 보고 채널",
+        "height": 452,
+        "width": 216,
+        "color": 6
+      },
+      "id": "b835de43-8363-4f05-8c1b-bc3404035378",
+      "name": "Sticky Note 9234",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        16
+      ]
+    }
+  ],
+  "connections": {
+    "미팅 보고 입력": {
+      "main": [
+        [
+          {
+            "node": "입력 데이터 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "입력 데이터 정리": {
+      "main": [
+        [
+          {
+            "node": "고객사 분석 Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "고객사 분석 Agent": {
+      "main": [
+        [
+          {
+            "node": "리스크 감지 여부",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok 모델": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "고객사 분석 Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "분석 결과 파서": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "고객사 분석 Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "리스크 감지 여부": {
+      "main": [
+        [
+          {
+            "node": "긴급 리스크 알림",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "분석 결과 보고",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "5eb44048-856d-42f4-922d-21709b3542ac",
+  "activeVersionId": null,
+  "versionCounter": 8,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:04:30.125Z",
+      "createdAt": "2026-05-20T09:04:30.125Z",
+      "role": "workflow:owner",
+      "workflowId": "50ZqTbmQPLuALOPr",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

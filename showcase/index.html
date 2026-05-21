@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한국콜마 오픈랩 — 워크플로우 쇼케이스</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root, [data-theme="dark"] {
+    --bg: #0f1117;
+    --bg-sidebar: #161822;
+    --bg-card: #1c1f2e;
+    --bg-card-hover: #252840;
+    --bg-code: #12141f;
+    --border: #2a2d3e;
+    --text: #e0e0e6;
+    --text-dim: #8b8fa3;
+    --text-bright: #f4f4f8;
+    --accent: #6c7ee1;
+    --accent-light: #8b9af0;
+    --schedule: #3ecf8e;
+    --schedule-bg: rgba(62,207,142,0.12);
+    --form: #f7b955;
+    --form-bg: rgba(247,185,85,0.12);
+    --sidebar-w: 340px;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --modal-bg: rgba(0,0,0,0.85);
+    --toggle-icon: '&#9790;';
+  }
+
+  [data-theme="light"] {
+    --bg: #f5f5f7;
+    --bg-sidebar: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f0f0f5;
+    --bg-code: #f8f8fa;
+    --border: #e0e0e6;
+    --text: #333340;
+    --text-dim: #71717a;
+    --text-bright: #18181b;
+    --accent: #5b6bd6;
+    --accent-light: #6c7ee1;
+    --schedule: #16a34a;
+    --schedule-bg: rgba(22,163,74,0.08);
+    --form: #d97706;
+    --form-bg: rgba(217,119,6,0.08);
+    --modal-bg: rgba(255,255,255,0.9);
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    transition: width 0.25s ease, min-width 0.25s ease;
+    overflow: hidden;
+  }
+
+  .sidebar.collapsed {
+    width: 56px;
+    min-width: 56px;
+  }
+
+  .sidebar.collapsed .sidebar-header > div { display: none; }
+  .sidebar.collapsed .team-list { padding: 4px; }
+  .sidebar.collapsed .team-info { display: none; }
+  .sidebar.collapsed .team-item { justify-content: center; gap: 0; padding: 12px 8px; }
+  .sidebar.collapsed .team-num { min-width: unset; }
+
+  .sidebar-collapse-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .sidebar-collapse-btn:hover { background: var(--bg-card-hover); }
+  .sidebar.collapsed .sidebar-collapse-btn { transform: rotate(180deg); }
+  .sidebar.collapsed .theme-toggle { display: none; }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sidebar-header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .sidebar-header p {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .theme-toggle:hover { background: var(--bg-card-hover); }
+
+  .team-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .team-list::-webkit-scrollbar { width: 4px; }
+  .team-list::-webkit-scrollbar-track { background: transparent; }
+  .team-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .team-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .team-item:hover { background: var(--bg-card); }
+
+  .team-item.active {
+    background: var(--bg-card);
+    border-color: var(--accent);
+  }
+
+  .team-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-light);
+    min-width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .team-info { flex: 1; min-width: 0; }
+
+  .team-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-bright);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .team-meta {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .trigger-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .trigger-dot.schedule { background: var(--schedule); }
+  .trigger-dot.form { background: var(--form); }
+
+  /* ── Main ─────────────────────────────────────────── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 36px 48px 60px;
+    height: 100vh;
+  }
+
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-track { background: transparent; }
+  .main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Header ──────────────────────────────────────── */
+  .wf-header { margin-bottom: 32px; }
+
+  .wf-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .wf-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .badge.schedule {
+    background: var(--schedule-bg);
+    color: var(--schedule);
+    border: 1px solid rgba(62,207,142,0.25);
+  }
+
+  .badge.form {
+    background: var(--form-bg);
+    color: var(--form);
+    border: 1px solid rgba(247,185,85,0.25);
+  }
+
+  .badge.nodes {
+    background: rgba(108,126,225,0.1);
+    color: var(--accent-light);
+    border: 1px solid rgba(108,126,225,0.2);
+  }
+
+  .badge.ai {
+    background: rgba(168,85,247,0.1);
+    color: #c084fc;
+    border: 1px solid rgba(168,85,247,0.2);
+  }
+
+  /* ── GIF Trigger ───────────────────────────────────── */
+  .gif-trigger {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 28px;
+    margin-bottom: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .gif-trigger:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent);
+  }
+
+  .gif-trigger .play-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    font-size: 16px;
+  }
+
+  .gif-trigger .play-label {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .gif-trigger .play-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 3px;
+  }
+
+  /* ── GIF Modal ─────────────────────────────────────── */
+  .gif-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-bg);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+  }
+
+  .gif-modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .gif-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    cursor: default;
+  }
+
+  .gif-modal-content img {
+    max-width: 90vw;
+    max-height: 85vh;
+    display: block;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease;
+    transform-origin: center center;
+    cursor: zoom-in;
+  }
+
+  .gif-modal-content img.zoomed {
+    cursor: zoom-out;
+    max-width: none;
+    max-height: none;
+  }
+
+  .gif-modal-close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .gif-modal-close:hover { background: var(--bg-card-hover); }
+
+  .gif-modal-title {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: 14px;
+  }
+
+  .gif-modal-hint {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 4px;
+    opacity: 0.6;
+  }
+
+  /* ── Section Title ─────────────────────────────────── */
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 20px;
+  }
+
+  /* ── Overview Cards ────────────────────────────────── */
+  .overview-cards {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .overview-card {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+  }
+
+  .overview-card h3 {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 12px;
+  }
+
+  .overview-card p {
+    font-size: 17px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* ── Node Flow ─────────────────────────────────────── */
+  .flow-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 36px;
+    perspective: 800px;
+  }
+
+  .flow-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 18px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+
+  .flow-item:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.14), 0 2px 4px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+  }
+
+  [data-theme="light"] .flow-item {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  [data-theme="light"] .flow-item:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  }
+
+  .flow-item:last-child { margin-bottom: 0; }
+
+  .flow-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 24px;
+    margin-top: 2px;
+    box-shadow: inset 0 -2px 4px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+    position: relative;
+  }
+
+  .flow-icon::after {
+    content: '';
+    position: absolute;
+    inset: 2px 2px auto 2px;
+    height: 40%;
+    border-radius: 12px 12px 50% 50%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+    pointer-events: none;
+  }
+
+  .flow-icon.clock { background: linear-gradient(135deg, rgba(62,207,142,0.18), rgba(62,207,142,0.06)); }
+  .flow-icon.form { background: linear-gradient(135deg, rgba(247,185,85,0.18), rgba(247,185,85,0.06)); }
+  .flow-icon.data { background: linear-gradient(135deg, rgba(108,126,225,0.16), rgba(108,126,225,0.04)); }
+  .flow-icon.download { background: linear-gradient(135deg, rgba(96,165,250,0.18), rgba(96,165,250,0.06)); }
+  .flow-icon.extract { background: linear-gradient(135deg, rgba(251,146,60,0.18), rgba(251,146,60,0.06)); }
+  .flow-icon.merge { background: linear-gradient(135deg, rgba(168,85,247,0.16), rgba(168,85,247,0.04)); }
+  .flow-icon.ai { background: linear-gradient(135deg, rgba(236,72,153,0.18), rgba(236,72,153,0.06)); }
+  .flow-icon.branch { background: linear-gradient(135deg, rgba(234,179,8,0.18), rgba(234,179,8,0.06)); }
+  .flow-icon.send { background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06)); }
+  .flow-icon.file { background: linear-gradient(135deg, rgba(96,165,250,0.18), rgba(96,165,250,0.06)); }
+  .flow-icon.gear { background: linear-gradient(135deg, rgba(148,163,184,0.16), rgba(148,163,184,0.04)); }
+
+  .flow-body { flex: 1; }
+
+  .flow-name {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+
+  .flow-type {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.05);
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  [data-theme="light"] .flow-type {
+    background: rgba(0,0,0,0.04);
+  }
+
+  .flow-desc {
+    font-size: 17px;
+    color: var(--text);
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+
+  /* ── Form Fields ───────────────────────────────────── */
+  .form-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .form-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .form-tag-type {
+    font-size: 11px;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.05);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  /* ── Requirement Spec ────────────────────────────────── */
+  .req-section {
+    margin-bottom: 36px;
+  }
+
+  .req-team-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .req-team-chip {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .req-team-chip strong {
+    color: var(--text-bright);
+    font-weight: 600;
+    margin-right: 4px;
+  }
+
+  .req-problem {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+
+  .req-problem h4 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 10px;
+  }
+
+  .req-problem p {
+    font-size: 17px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .req-impl {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+
+  .req-impl h4 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 10px;
+  }
+
+  .req-impl-body {
+    font-size: 16px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  .req-impl-body strong {
+    color: var(--text-bright);
+  }
+
+  .req-systems {
+    margin-bottom: 20px;
+  }
+
+  .req-systems table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+
+  .req-systems th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    color: var(--text-bright);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .req-systems td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .req-notes {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .req-notes li {
+    margin-bottom: 6px;
+    margin-left: 20px;
+  }
+
+  /* ── JSON Download ──────────────────────────────────── */
+  .json-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--accent-light);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 32px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .json-download:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent);
+  }
+
+  .json-download .dl-icon {
+    font-size: 18px;
+  }
+
+  /* ── Welcome ───────────────────────────────────────── */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--text-dim);
+    padding: 40px;
+  }
+
+  .welcome .logo { font-size: 56px; margin-bottom: 24px; opacity: 0.3; }
+  .welcome h2 { font-size: 24px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .welcome p { font-size: 16px; line-height: 1.6; max-width: 420px; }
+
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 240px; }
+    .main { padding: 24px 20px 40px; }
+    .wf-title { font-size: 24px; }
+    .overview-cards { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <h1>한국콜마 오픈랩</h1>
+      <p>AI 워크플로우 쇼케이스 — 14팀</p>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="테마 전환">&#9790;</button>
+    <button class="sidebar-collapse-btn" id="sidebarToggle" title="사이드바 접기">&#9664;</button>
+  </div>
+  <nav class="team-list" id="teamList"></nav>
+</aside>
+
+<main class="main" id="mainContent">
+  <div class="welcome" id="welcome">
+    <div class="logo">&#9881;</div>
+    <h2>워크플로우를 선택하세요</h2>
+    <p>왼쪽 목록에서 팀을 클릭하면 워크플로우 구조, 노드 흐름, 시연 영상을 확인할 수 있습니다.</p>
+  </div>
+  <div id="detail" style="display:none;"></div>
+</main>
+
+<div class="gif-modal-overlay" id="gifModal">
+  <div class="gif-modal-content">
+    <button class="gif-modal-close" id="gifModalClose">&times;</button>
+    <img id="gifModalImg" src="" alt="" />
+    <div class="gif-modal-title" id="gifModalTitle"></div>
+    <div class="gif-modal-hint">클릭: 확대/축소 | 스크롤: 줌 | ESC: 닫기</div>
+  </div>
+</div>
+
+<script>
+const SHOW_JSON_DOWNLOAD = true;  // false로 바꾸면 JSON 다운로드 링크 숨김
+
+const ICON_MAP = {
+  clock: '&#128337;',
+  form: '&#128221;',
+  data: '&#9881;',
+  download: '&#128229;',
+  extract: '&#128196;',
+  merge: '&#128279;',
+  ai: '&#129302;',
+  branch: '&#128256;',
+  send: '&#128228;',
+  file: '&#128462;',
+  gear: '&#9881;'
+};
+
+const DATA = [
+  {
+    "num": "03",
+    "display_name": "#03 초도생산 출장일정 관리",
+    "description": "초도생산 출장일정 관리",
+    "trigger": "schedule",
+    "trigger_detail": "매일 실행",
+    "node_count": 11,
+    "stickies": [
+      "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+      "## 2. AI 분석\nAI Agent가 데이터를 분석하고 구조화된 결과를 반환",
+      "## 3. 결과 전달\n조건 판단 후 Slack 채널로 알림 발송"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매일 실행",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "생산계획표 위치 가져오기",
+        "type": "데이터 설정",
+        "desc": "변수: file-path"
+      },
+      {
+        "icon": "download",
+        "name": "생산계획표 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "Excel 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "생산계획 변경 분석",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "branch",
+        "name": "알림 필요 여부",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "변경 알림 발송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "생산계획표 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "03-초도생산 출장일정 관리.gif",
+    "team_info": {
+      "회사": "KBH (콜마비앤에이치)",
+      "팀": "식품개발1팀",
+      "멤버": "양서진, 신보경 (2명)",
+      "난이도": "중"
+    },
+    "problem": "NAS에 있는 엑셀 기반 생산계획표의 일정 변경을 실시간으로 확인할 수 없다. 퇴근 후 변경이 발생하면 다음날 불필요한 출장이 생긴다.",
+    "implementation": "**핵심 흐름:** NAS 파일 변경 감지 → 변경 내용 파싱 → 관련자 알림 → 참관 여부 폼 → 대시보드\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — NAS 마운트가 안 되면 주기적으로 엑셀 파일을 읽는 방식으로 시작\n2. **Spreadsheet File 노드** — 생산계획표 엑셀 읽기/파싱\n3. **IF 노드** — 이전 데이터와 비교하여 변경 감지\n4. **Gmail/Teams 노드** — 변경 알림 발송\n\n### 단계별 실습\n\n- **1단계:** Schedule Trigger + Spreadsheet File로 엑셀 읽기 (30분이면 가능)\n- **2단계:** 이전 실행 결과와 비교하여 변경 감지 (Code 노드 필요)\n- **3단계:** 변경 시 메일/Teams 알림\n- **4단계 (심화):** AI로 일정 변경 패턴 분석, 출장 필요성 자동 판단",
+    "systems": [
+      {
+        "name": "NAS",
+        "purpose": "생산계획표 엑셀",
+        "method": "SMB 마운트 or 수동 업로드"
+      },
+      {
+        "name": "PDM",
+        "purpose": "제품 데이터 참조",
+        "method": "SAP 경유 또는 불필요"
+      },
+      {
+        "name": "SAP",
+        "purpose": "생산계획 보조",
+        "method": "엑셀 우회 가능"
+      }
+    ],
+    "notes": "- 기획서가 매우 상세하고 구체적. 팀 자체 역량 높을 것으로 예상\n- NAS 접근이 관건 — n8n 서버가 사내 네트워크에 있으면 마운트 가능, 아니면 수동 업로드 패턴\n- File Trigger보다 Schedule Trigger가 안정적 (NAS 연결 끊김 대응)"
+  },
+  {
+    "num": "07",
+    "display_name": "#07 부자재 일정점검 자동화",
+    "description": "부자재 일정점검 자동화",
+    "trigger": "schedule",
+    "trigger_detail": "매일 08:30 실행",
+    "node_count": 11,
+    "stickies": [
+      "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+      "## 2. AI 분석\nAI Agent가 데이터를 분석하고 구조화된 결과를 반환",
+      "## 3. 결과 전달\n조건 판단 후 Slack 채널로 알림 발송"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매일 08:30 실행",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "일정표 위치 가져오기",
+        "type": "데이터 설정",
+        "desc": "변수: file-path"
+      },
+      {
+        "icon": "download",
+        "name": "부자재 일정표 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "Excel 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "부자재 납기 점검",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "branch",
+        "name": "알림 필요 여부",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "이상 항목 알림 발송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "부자재 일정표 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "07-부자재 일정점검 자동화.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "패키지구매팀",
+      "멤버": "김주일, 공병국, 박정철 (3명)",
+      "난이도": "중"
+    },
+    "problem": "1인당 1,000~1,200건 발주 관리. 1차/2차 포장재 입고 불균형. 납기를 수기로 확인하느라 시간 소모.",
+    "implementation": "**핵심 흐름:** 매일 08:30 SRM 데이터 수집 → 미기입/불일치 선별 → 협력사 알림 → 회신 취합 → SRM 반영\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — 매일 08:30 자동 실행\n2. **Spreadsheet File 노드** — SRM에서 내보낸 엑셀 읽기 (SRM 직접 접근 불가 시 우회)\n3. **IF/Switch 노드** — 미기입 오더, 1차/2차 불일치 조건 필터\n4. **Gmail 노드** — 협력사에 납기 확인 요청 메일 자동 발송\n\n### 단계별 실습\n\n- **1단계:** Schedule + Spreadsheet로 엑셀에서 발주 데이터 읽기\n- **2단계:** 조건 분기로 \"납기 미기입\", \"1·2차 불일치\" 자동 선별\n- **3단계:** 필터된 건에 대해 자동 메일 발송\n- **4단계 (심화):** 회신 취합 자동화, SRM 업로드용 엑셀 생성",
+    "systems": [
+      {
+        "name": "SRM",
+        "purpose": "납기 데이터 조회",
+        "method": "엑셀 내보내기 (기획서에서 명시)"
+      },
+      {
+        "name": "SAP",
+        "purpose": "발주 데이터",
+        "method": "엑셀 우회 또는 OData"
+      }
+    ],
+    "notes": "- 기획서에서 이미 \"SRM 접근 불가 시 엑셀로 내려받기\" 대안을 준비함 — 현실적\n- #14(포장재 발주 알람)과 같은 팀. 공통 모듈 공유 가능\n- SRM 쓰기 권한 확보가 어려우면 \"SRM 업로드용 엑셀 자동 생성 → 담당자가 수동 업로드\" 패턴"
+  },
+  {
+    "num": "08",
+    "display_name": "#08 경영진 고객사 현황 앱",
+    "description": "경영진 고객사 현황 앱",
+    "trigger": "form",
+    "trigger_detail": "고객사명, 미팅 유형, 미팅 보고 내용",
+    "node_count": 8,
+    "stickies": [
+      "## 1. 입력\n미팅 보고 폼 입력\n(고객사, 유형, 내용)",
+      "## 2. AI 분석\n고객사 표준화, 분류,\n요약, 리스크 판단",
+      "## 3. 결과 전달\n리스크 감지 시 긴급 알림\n일반 건은 보고 채널"
+    ],
+    "flow_steps": [
+      {
+        "icon": "form",
+        "name": "미팅 보고 입력",
+        "type": "폼 트리거",
+        "desc": "입력 필드: 고객사명, 미팅 유형, 미팅 보고 내용"
+      },
+      {
+        "icon": "data",
+        "name": "입력 데이터 정리",
+        "type": "데이터 설정",
+        "desc": "변수: customer, type, report"
+      },
+      {
+        "icon": "ai",
+        "name": "고객사 분석 Agent",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "branch",
+        "name": "리스크 감지 여부",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "분석 결과 보고",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      },
+      {
+        "icon": "send",
+        "name": "긴급 리스크 알림",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "08-경영진 고객사 현황 앱.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "영업기획팀",
+      "멤버": "엄나리, 홍민선 (2명)",
+      "난이도": "상"
+    },
+    "problem": "경영진 보고용 데이터를 수작업으로 취합 (월 4회 x 2시간). 담당자마다 양식이 다르다.",
+    "implementation": "**핵심 흐름:** OneDrive 파일 업로드 감지 → AI 파싱/분류 → 담당자 검증 → DB 적재 → 대시보드\n\n### 워크숍 접근\n\n1. **OneDrive Trigger** — 파일 업로드 감지 (MS Entra ID OAuth2)\n2. **Spreadsheet File 노드** — 업로드된 엑셀 파싱\n3. **AI Agent** — 고객사명 표준화(유사도 매칭), 미팅 내용 자동 분류/요약\n4. **Gmail/Teams 노드** — 담당자에게 검증 요청\n\n### 단계별 실습\n\n- **1단계:** OneDrive Trigger + Spreadsheet로 파일 자동 수집/파싱\n- **2단계:** AI로 텍스트 분류/요약 (고객사 미팅 내용 정리)\n- **3단계:** 정제된 데이터를 정형화하여 저장\n- **4단계 (심화):** 뉴스 자동 수집, 대시보드 시각화",
+    "systems": [
+      {
+        "name": "OneDrive",
+        "purpose": "파일 업로드 감지",
+        "method": "n8n OneDrive 노드 (MS OAuth2)"
+      },
+      {
+        "name": "DB",
+        "purpose": "데이터 적재",
+        "method": "PostgreSQL/Spreadsheet"
+      },
+      {
+        "name": "뉴스 API",
+        "purpose": "고객사 관련 뉴스",
+        "method": "HTTP Request"
+      },
+      {
+        "name": "CRM",
+        "purpose": "고객 정보",
+        "method": "엑셀 우회 가능"
+      }
+    ],
+    "notes": "- 가장 야심찬 과제. Figma MCP + 바이브코딩까지 계획 — 앱 개발 부분은 Open Lab 범위 밖\n- 워크숍에서는 \"데이터 수집 → AI 분류/요약 → 알림\" 파이프라인에 집중\n- OneDrive 연동은 MS Entra ID 앱 등록 1회면 됨 (1분기 SSO 인프라 활용)"
+  },
+  {
+    "num": "09",
+    "display_name": "#09 AI Auto PM",
+    "description": "AI Auto PM",
+    "trigger": "form",
+    "trigger_detail": "변경사항 내용, 프로젝트 코드",
+    "node_count": 13,
+    "stickies": [
+      "## 1. 데이터 수집\n트리거 → 파일 경로 설정 → 2개 소스 병렬 읽기 → 병합",
+      "## 2. AI 분석\nAI Agent가 두 데이터셋을 교차 분석",
+      "## 3. 결과 전달\nSlack/파일로 결과 전달"
+    ],
+    "flow_steps": [
+      {
+        "icon": "form",
+        "name": "PM 변경사항 입력 폼",
+        "type": "폼 트리거",
+        "desc": "입력 필드: 변경사항 내용, 프로젝트 코드"
+      },
+      {
+        "icon": "data",
+        "name": "파일 경로 설정",
+        "type": "데이터 설정",
+        "desc": "변수: file-path-milestone, file-path-budget"
+      },
+      {
+        "icon": "download",
+        "name": "마일스톤 Excel 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "download",
+        "name": "예산 Excel 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "마일스톤 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "extract",
+        "name": "예산 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "마일스톤+예산 병합",
+        "type": "병합",
+        "desc": "2개 데이터셋 합치기"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "PM 교차분석 Agent",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "send",
+        "name": "Teams 알림 전송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "마일스톤 Excel 읽기",
+      "예산 Excel 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "09-AI Auto PM.gif",
+    "team_info": {
+      "회사": "KBH (콜마비앤에이치)",
+      "팀": "C&D팀",
+      "멤버": "한희수, 박수빈, 조민식 (3명)",
+      "난이도": "상"
+    },
+    "problem": "마일스톤과 예산을 별도로 관리. 취합 부하가 크고, 팀원 간 정보 공유가 어렵다.",
+    "implementation": "**핵심 흐름:** 변경사항 입력 → 자동 반영 → 관계자 알림 → D-day 알림\n\n### 워크숍 접근\n\n1. **Webhook / Form Trigger** — 변경사항 입력 받기\n2. **Spreadsheet File 노드** — Excel 기반 마일스톤/예산 데이터 읽기/쓰기\n3. **AI Agent** — 일정 자동 업데이트 판단, 예산 시나리오별 대안 제시\n4. **MS Teams 노드** — 수신자 맞춤 알림 발송\n\n### 단계별 실습\n\n- **1단계:** Schedule Trigger + Spreadsheet로 마일스톤 엑셀 읽기\n- **2단계:** D-day 계산 → 조건부 알림 (IF 노드)\n- **3단계:** Teams로 관계자 알림 발송\n- **4단계 (심화):** AI로 예산 시나리오 분석, 수신자별 요약 생성",
+    "systems": [
+      {
+        "name": "Teams",
+        "purpose": "알림/입력",
+        "method": "n8n MS Teams 노드 (MS OAuth2)"
+      },
+      {
+        "name": "Excel",
+        "purpose": "마일스톤/예산 데이터",
+        "method": "Spreadsheet File 노드"
+      }
+    ],
+    "notes": "- PM 도구 성격. 외부 시스템 연동 없이 Teams + Excel만으로 핵심 기능 구현 가능\n- Teams 연동은 MS OAuth2 한 번 설정이면 됨\n- AI 난이도가 높은 건 \"예산 시나리오 대안 제시\" 부분 — 워크숍에서는 간단한 요약부터 시작"
+  },
+  {
+    "num": "11",
+    "display_name": "#11 온실가스 배출량 산정",
+    "description": "온실가스 배출량 산정",
+    "trigger": "form",
+    "trigger_detail": "시설명, 고지서 내용",
+    "node_count": 8,
+    "stickies": [
+      "## 1. 입력\n전기 고지서 텍스트\n시설명 입력",
+      "## 2. AI 추출 + 환산\n사용량/금액 추출 →\nCO₂ 배출량 계산",
+      "## 3. 결과 전달\n기준 초과 시 경고 알림\n정상 시 결과 기록"
+    ],
+    "flow_steps": [
+      {
+        "icon": "form",
+        "name": "고지서 입력",
+        "type": "폼 트리거",
+        "desc": "입력 필드: 시설명, 고지서 내용"
+      },
+      {
+        "icon": "data",
+        "name": "입력 정리",
+        "type": "데이터 설정",
+        "desc": "변수: facility, invoice"
+      },
+      {
+        "icon": "gear",
+        "name": "고지서 정보 추출",
+        "type": "informationExtractor",
+        "desc": ""
+      },
+      {
+        "icon": "data",
+        "name": "배출량 환산",
+        "type": "데이터 설정",
+        "desc": "변수: facility, period, total_kwh, co2_tons"
+      },
+      {
+        "icon": "branch",
+        "name": "기준치 초과 여부",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "배출량 결과 기록",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      },
+      {
+        "icon": "send",
+        "name": "기준 초과 알림",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [],
+    "ai_type": "",
+    "gif_file": "11-온실가스 배출량 산정.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "ESG경영팀 + PI기획팀 + 환경안전팀",
+      "멤버": "김정현, 김현진, 이준우 (3명, 3개 부서)",
+      "난이도": "상"
+    },
+    "problem": "고지서 수기 취합, MSDS(물질안전보건자료) 주소 수동 추출. 외부 배출량 산정 플랫폼에 연 1억원 지출.",
+    "implementation": "**핵심 흐름:** 고지서 스캔 → OCR 추출 → 데이터 정제 → 배출계수 적용 → BI 연동\n\n### 워크숍 접근\n\n1. **Webhook / Form Trigger** — 고지서 이미지 업로드\n2. **HTTP Request** — OCR API 호출 (Azure Vision 또는 Clova OCR)\n3. **AI Agent** — MSDS에서 공급지 주소 추출, 물류거리 계산\n4. **Code 노드** — 배출계수 적용 계산\n\n### 단계별 실습\n\n- **1단계:** Form으로 이미지 업로드 → AI(GPT-4o Vision)로 텍스트 추출\n- **2단계:** 추출된 데이터 정형화 (Code 노드)\n- **3단계:** 배출계수 테이블과 매칭하여 배출량 자동 계산\n- **4단계 (심화):** BI(Power BI) 데이터 푸시, 자동 리포트 생성",
+    "systems": [
+      {
+        "name": "OCR",
+        "purpose": "고지서 텍스트 추출",
+        "method": "AI 멀티모달 또는 Azure Vision API"
+      },
+      {
+        "name": "SRM",
+        "purpose": "MSDS 데이터",
+        "method": "엑셀 우회"
+      },
+      {
+        "name": "BI",
+        "purpose": "대시보드",
+        "method": "Power BI REST API"
+      }
+    ],
+    "notes": "- ROI가 가장 명확한 과제 (연 1억원 외부 플랫폼 대체 가능성)\n- 도메인 지식 필요: 배출계수, Scope 3 간접 배출량 산정 기준\n- 3개 부서 합작 → 각 부서의 역할 분담이 워크숍에서 중요\n- OCR 정확도는 고지서 양식이 정형화되어 있으므로 비교적 높을 것"
+  },
+  {
+    "num": "13",
+    "display_name": "#13 AI 기반 생산준비 최적화",
+    "description": "AI 기반 생산준비 최적화",
+    "trigger": "schedule",
+    "trigger_detail": "매일 실행",
+    "node_count": 14,
+    "stickies": [
+      "## 1. 데이터 수집\n트리거 → 파일 경로 설정 → 2개 소스 병렬 읽기 → 병합",
+      "## 2. AI 분석\nAI Agent가 두 데이터셋을 교차 분석",
+      "## 3. 결과 전달\n조건 판단 후 Slack/파일로 결과 전달"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매일 실행",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "파일 경로 설정",
+        "type": "데이터 설정",
+        "desc": "변수: file-path-bom, file-path-inventory"
+      },
+      {
+        "icon": "download",
+        "name": "BOM 소요량 Excel 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "download",
+        "name": "재고현황 Excel 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "BOM 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "extract",
+        "name": "재고 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "BOM+재고 병합",
+        "type": "병합",
+        "desc": "2개 데이터셋 합치기"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "생산준비 분석 Agent",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "branch",
+        "name": "알림 필요 여부 확인",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "부족 알림 이메일 전송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "BOM 소요량 Excel 읽기",
+      "재고현황 Excel 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "13-AI 기반 생산준비 최적화.gif",
+    "team_info": {
+      "회사": "KBH (콜마비앤에이치)",
+      "팀": "음성생산계획팀 + 경영정보팀",
+      "멤버": "유승빈, 정재욱, 허지아 (3명)",
+      "난이도": "상",
+      "심화교육": "**불참**"
+    },
+    "problem": "자재 가용성 불일치로 생산 차질. 빈번한 계획 변경, 작업자 혼선.",
+    "implementation": "**핵심 흐름:** SCP/SAP/엑셀 데이터 수집 → BOM 가용성 검증 → 부하율 점검 → 이상 시 알림\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — 주기적 데이터 수집\n2. **Spreadsheet File 노드** — SCP/SAP에서 내보낸 엑셀 읽기\n3. **Code 노드** — BOM 과부족 확인, 기준정보 정합성 검증\n4. **IF 노드** — 이상 조건 필터 → 알림\n\n### 단계별 실습\n\n- **1단계:** 엑셀에서 BOM 데이터 읽기 + 기본 필터링\n- **2단계:** 재고 vs 소요량 비교 로직 (Code 노드)\n- **3단계:** 부족 자재 알림 자동 발송\n- **4단계 (심화):** AI로 원납기 대비 결과 예측",
+    "systems": [
+      {
+        "name": "SCP",
+        "purpose": "생산계획",
+        "method": "엑셀 내보내기"
+      },
+      {
+        "name": "SAP",
+        "purpose": "자재/BOM",
+        "method": "엑셀 또는 OData"
+      },
+      {
+        "name": "MES",
+        "purpose": "실적 데이터",
+        "method": "SAP 경유 또는 엑셀"
+      }
+    ],
+    "notes": "- **심화교육 불참** — 기초 가이드 별도 제공 필요. n8n 경험이 전무할 가능성\n- 3시스템 연동으로 복잡도 최고 수준 — 워크숍에서는 엑셀 1개로 시작, 점진 확장\n- 엑셀 우회가 현실적. 직접 API 연동은 멘토링 단계에서 검토"
+  },
+  {
+    "num": "14",
+    "display_name": "#14 포장재 발주 알람",
+    "description": "포장재 발주 알람",
+    "trigger": "schedule",
+    "trigger_detail": "매일 실행",
+    "node_count": 11,
+    "stickies": [
+      "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+      "## 2. AI 분석\nAI Agent가 데이터를 분석하고 구조화된 결과를 반환",
+      "## 3. 결과 전달\n조건 판단 후 Slack 채널로 알림 발송"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매일 실행",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "발주 현황 위치 가져오기",
+        "type": "데이터 설정",
+        "desc": "변수: file-path"
+      },
+      {
+        "icon": "download",
+        "name": "포장재 발주 현황 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "Excel 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "포장재 발주 이상 분석",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "branch",
+        "name": "알림 필요 여부",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "발주 이상 알림 발송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "포장재 발주 현황 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "14-포장재 발주 알람.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "패키지구매팀",
+      "멤버": "서진아, 권미현, 조지은 (3명)",
+      "난이도": "중"
+    },
+    "problem": "신규 고객사 미배정, 조회 오류로 발주 누락. 대량 주문 처리 지연.",
+    "implementation": "**핵심 흐름:** SO 접수 → 발주 미생성 감지 → 알람 → SRM 상태별 메일링 → 단납기 긴급 표시\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — 주기적 발주 상태 점검\n2. **Spreadsheet File 노드** — SAP/SRM에서 내보낸 발주 데이터 읽기\n3. **IF/Switch 노드** — 미생성, 지연, 단납기 조건 분기\n4. **Gmail 노드** — 상태별 차별화된 알림 발송\n\n### 단계별 실습\n\n- **1단계:** 엑셀에서 발주 데이터 읽기 + 기본 조건 필터\n- **2단계:** \"발주 미생성\" 건 자동 감지 (SO 대비 PO 매칭)\n- **3단계:** 긴급도별 알림 분기 (일반/단납기/미배정)\n- **4단계 (심화):** AI로 발주 오류 패턴 감지, 담당자 자동 매칭",
+    "systems": [
+      {
+        "name": "SAP",
+        "purpose": "SO/PO 데이터",
+        "method": "엑셀 또는 OData"
+      },
+      {
+        "name": "SRM",
+        "purpose": "발주 상태",
+        "method": "엑셀 내보내기"
+      }
+    ],
+    "notes": "- #07과 같은 팀(패키지구매팀). 엑셀 수집 → 조건 분기 → 알림 패턴이 동일\n- 두 과제를 하나의 워크플로우 기반에서 분기시키는 것도 가능\n- 멘토링 시 #07과 합동 세션 권장"
+  },
+  {
+    "num": "15",
+    "display_name": "#15 자산·계약 관리",
+    "description": "자산·계약 관리",
+    "trigger": "schedule",
+    "trigger_detail": "매일 실행",
+    "node_count": 10,
+    "stickies": [
+      "## 1. 데이터 수집\n매일 자동 실행 →\n계약 대장 Excel 읽기",
+      "## 2. AI 분석\n계약 만료 D-30/D-7/D-day\n판단 + Structured Output",
+      "## 3. 알림 전달\n알림 필요 시\nSlack 채널 알림"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매일 실행",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "계약 파일 위치 가져오기",
+        "type": "데이터 설정",
+        "desc": "변수: file-path"
+      },
+      {
+        "icon": "download",
+        "name": "계약 파일 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "엑셀 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "계약 만료 분석 AI",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "branch",
+        "name": "알림 필요 여부",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "Send a message",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "계약 파일 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "15-자산·계약 관리.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "공장관리팀",
+      "멤버": "임선동, 유정인 (2명)",
+      "난이도": "중"
+    },
+    "problem": "차량/지게차/도급사를 개별 관리. 계약 만료를 놓칠 위험.",
+    "implementation": "**핵심 흐름:** 계약 만기/평가 시점 알림 → 서류 체크리스트 → 보험 만기 알림\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — 매일 계약 만기 체크\n2. **Spreadsheet File 노드** — 계약 대장 엑셀 읽기\n3. **IF 노드** — D-30, D-7 등 만기 임박 조건\n4. **Gmail/Teams 노드** — 담당자 알림\n\n### 단계별 실습\n\n- **1단계:** 엑셀에서 계약 목록 읽기 + 날짜 계산\n- **2단계:** 만기 임박 건 필터 (D-30, D-7, D-day)\n- **3단계:** 알림 메일 자동 발송\n- **4단계 (심화):** AI로 계약 특이사항 분석, 재계약 심사 자료 자동 취합",
+    "systems": [
+      {
+        "name": "Excel",
+        "purpose": "계약 대장",
+        "method": "Spreadsheet File 노드"
+      }
+    ],
+    "notes": "- 14개 과제 중 가장 단순한 구조. Excel만 쓰므로 진입장벽 최저\n- 워크숍 첫 실습 데모용으로 적합\n- 30분이면 기본 워크플로우 완성 가능"
+  },
+  {
+    "num": "20",
+    "display_name": "#20 물류창고 일일결산",
+    "description": "물류창고 일일결산",
+    "trigger": "schedule",
+    "trigger_detail": "매일 퇴근 전",
+    "node_count": 10,
+    "stickies": [
+      "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+      "## 2. AI 분석\nAI Agent가 데이터를 분석하고 일일결산 리포트를 작성",
+      "## 3. 결과 전달\n결산 리포트를 Slack 채널로 발송"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매일 퇴근 전",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "입출고 파일 위치 가져오기",
+        "type": "데이터 설정",
+        "desc": "변수: file-path"
+      },
+      {
+        "icon": "download",
+        "name": "입출고 파일 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "엑셀 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "일일결산 AI",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "send",
+        "name": "결산 리포트 발송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "입출고 파일 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "20-물류창고 일일결산.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "생산계획팀(부천) + 메이크업공정혁신팀 + CSM2팀",
+      "멤버": "백민수, 이도훈, 박지우 (3명, 3개 부서)",
+      "난이도": "중"
+    },
+    "problem": "자재 이동 실시간 확인 불가. 차량이 한정되어 이동 지연. 긴급 품목은 유선 확인만 가능.",
+    "implementation": "**핵심 흐름:** MES/SAP/LIMS 데이터 자동 수집 → 일일 결산 정리 → 메일 발송\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — 매일 퇴근 전 결산 시점 자동 실행\n2. **Spreadsheet File 노드** — 각 시스템에서 내보낸 엑셀 통합 읽기\n3. **Code 노드** — 데이터 취합/정리\n4. **Gmail 노드** — 결산 메일 자동 발송\n\n### 단계별 실습\n\n- **1단계:** 엑셀 1개에서 데이터 읽기 + 정리\n- **2단계:** 여러 엑셀 파일을 하나로 병합 (Merge 노드)\n- **3단계:** 일일 결산 메일 자동 생성/발송\n- **4단계 (심화):** AI로 이동 패턴 분석, 지연 예측",
+    "systems": [
+      {
+        "name": "MES",
+        "purpose": "생산 실적",
+        "method": "엑셀 또는 SAP 경유"
+      },
+      {
+        "name": "SAP",
+        "purpose": "자재 이동",
+        "method": "엑셀 또는 OData"
+      },
+      {
+        "name": "LIMS",
+        "purpose": "검수 데이터",
+        "method": "엑셀 내보내기"
+      }
+    ],
+    "notes": "- 3시스템이지만 전부 읽기전용 → 엑셀 우회가 충분\n- \"확인 시간 80% 단축\" 목표 — 현실적이고 측정 가능\n- 결산 메일 템플릿을 잘 만들면 팀 만족도 높을 과제"
+  },
+  {
+    "num": "21",
+    "display_name": "#21 QC 주간 업무표 자동 생성",
+    "description": "QC 주간 업무표 자동 생성",
+    "trigger": "schedule",
+    "trigger_detail": "매주 월요일 09시",
+    "node_count": 12,
+    "stickies": [
+      "## 1. 데이터 수집\n트리거 → 파일 경로 설정 → 2개 소스 병렬 읽기 → 병합",
+      "## 2. AI 분석\nAI Agent가 두 데이터셋을 교차 분석",
+      "## 3. 결과 전달\nSlack/파일로 결과 전달"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매주 월요일 09시",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "파일 경로 설정",
+        "type": "데이터 설정",
+        "desc": "변수: file-path-schedule, file-path-capability"
+      },
+      {
+        "icon": "download",
+        "name": "시험일정 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "download",
+        "name": "시험자역량 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "시험일정 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "extract",
+        "name": "시험자역량 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "일정+역량 병합",
+        "type": "병합",
+        "desc": "2개 데이터셋 합치기"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "QC 업무배정 AI",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "gear",
+        "name": "배정표 엑셀 생성",
+        "type": "convertToFile",
+        "desc": ""
+      }
+    ],
+    "data_sources": [
+      "시험일정 읽기",
+      "시험자역량 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "21-QC 주간 업무표 자동 생성.gif",
+    "team_info": {
+      "회사": "HKN (한국콜마넥스)",
+      "팀": "오송 품질관리1팀",
+      "멤버": "고아라, 김세은, 이주은 (3명)",
+      "난이도": "상"
+    },
+    "problem": "13명 시험자의 업무를 수기 배정. 난이도/숙련도/장비 가용성을 동시에 고려하기 어렵다.",
+    "implementation": "**핵심 흐름:** 생산계획/안정성시험/출하일정 수집 → AI로 1차 배정 초안 생성 → 장비 가용성 점검\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — 주 1회 (월요일 오전) 자동 실행\n2. **Spreadsheet File 노드** — 생산계획/시험 일정/시험자 역량 엑셀 읽기\n3. **AI Agent** — 다중 조건 기반 배정 추천 생성\n4. **Spreadsheet File 노드** — 배정 결과를 엑셀로 출력\n\n### 단계별 실습\n\n- **1단계:** 시험자 목록 + 업무 목록 엑셀 읽기\n- **2단계:** AI에게 \"이 업무를 이 사람들에게 배정해줘\" 프롬프트 설계\n- **3단계:** AI 배정 결과를 엑셀로 출력\n- **4단계 (심화):** 업무 편중 점검, 배정 사유 자동 생성",
+    "systems": [
+      {
+        "name": "Excel",
+        "purpose": "생산계획, 시험 일정, 시험자 역량",
+        "method": "Spreadsheet File 노드"
+      }
+    ],
+    "notes": "- 스케줄링/최적화 문제. AI 의존도가 가장 높은 과제\n- 연동은 Excel뿐이라 단순하지만, AI 프롬프트 설계가 핵심\n- 워크숍에서 \"AI에게 복잡한 판단을 시키는 방법\"을 가르치기 좋은 과제"
+  },
+  {
+    "num": "22",
+    "display_name": "#22 이어서사용 자동화",
+    "description": "이어서사용 자동화",
+    "trigger": "form",
+    "trigger_detail": "처리 담당자, 라벨 내용",
+    "node_count": 7,
+    "stickies": [
+      "## 1. 입력\n환입 라벨 텍스트\n담당자 입력",
+      "## 2. AI 추출\n자재코드, LOT, 유효기한\n등 자동 추출",
+      "## 3. 등록 알림\n유효기한 유무에 따라\n분기 처리"
+    ],
+    "flow_steps": [
+      {
+        "icon": "form",
+        "name": "환입 라벨 입력",
+        "type": "폼 트리거",
+        "desc": "입력 필드: 처리 담당자, 라벨 내용"
+      },
+      {
+        "icon": "data",
+        "name": "입력 정리",
+        "type": "데이터 설정",
+        "desc": "변수: handler, label"
+      },
+      {
+        "icon": "gear",
+        "name": "라벨 정보 추출",
+        "type": "informationExtractor",
+        "desc": ""
+      },
+      {
+        "icon": "branch",
+        "name": "유효기한 확인",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "환입 등록 + 기한 알림",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      },
+      {
+        "icon": "send",
+        "name": "환입 등록 (포장재)",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [],
+    "ai_type": "",
+    "gif_file": "22-이어서사용 자동화.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "물류팀",
+      "멤버": "사재한, 김명겸, 한국남 (3명)",
+      "난이도": "중"
+    },
+    "problem": "Teams 확인 후 PDA로 처리하는 과정에서 지연 발생. 처리가 늦으면 생산이 지연된다.",
+    "implementation": "**핵심 흐름:** 챗봇에 환입 라벨 업로드 → OCR 추출 → 데이터 가공 → (MES 연동 or 결과 알림)\n\n### 워크숍 접근\n\n1. **Webhook** — 챗봇에서 이미지 수신\n2. **AI Agent (멀티모달)** — 환입 라벨 OCR 추출\n3. **Code 노드** — 추출 데이터 가공/검증\n4. **Teams 노드** — 처리 결과 알림\n\n### 단계별 실습\n\n- **1단계:** Webhook으로 이미지 수신 + AI Vision으로 텍스트 추출\n- **2단계:** 추출된 데이터 정형화 (Code 노드)\n- **3단계:** 처리 결과를 Teams로 알림\n- **4단계 (심화):** MES 연동으로 자동 수불 처리 (API 확인 후)",
+    "systems": [
+      {
+        "name": "MES",
+        "purpose": "수불 처리",
+        "method": "API 확인 필요 (쓰기 권한 난이도 높음)"
+      },
+      {
+        "name": "챗봇",
+        "purpose": "라벨 이미지 수신",
+        "method": "Webhook"
+      }
+    ],
+    "notes": "- MES 쓰기는 현장 사고 리스크로 허용 가능성 매우 낮음. 기획서에서도 \"검토 필요\" 명시\n- MES 연동 없이도 \"라벨 OCR → 정보 추출 → 알림\"까지는 구현 가능\n- 워크숍에서는 MES 연동 빼고 OCR + 알림에 집중"
+  },
+  {
+    "num": "28",
+    "display_name": "#28 자재 특이사항 조회",
+    "description": "자재 특이사항 조회",
+    "trigger": "form",
+    "trigger_detail": "자재코드",
+    "node_count": 12,
+    "stickies": [
+      "## 1. 데이터 수집\n트리거 → 파일 경로 설정 → 2개 소스 병렬 읽기 → 병합",
+      "## 2. AI 분석\nAI Agent가 두 데이터셋을 교차 분석",
+      "## 3. 결과 전달\nSlack/파일로 결과 전달"
+    ],
+    "flow_steps": [
+      {
+        "icon": "form",
+        "name": "자재코드 입력 폼",
+        "type": "폼 트리거",
+        "desc": "입력 필드: 자재코드"
+      },
+      {
+        "icon": "data",
+        "name": "파일 경로 설정",
+        "type": "데이터 설정",
+        "desc": "변수: file-path-inspection, file-path-history"
+      },
+      {
+        "icon": "download",
+        "name": "검사결과 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "download",
+        "name": "특이사항이력 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "검사결과 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "extract",
+        "name": "특이사항이력 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "검사+이력 병합",
+        "type": "병합",
+        "desc": "2개 데이터셋 합치기"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "자재 분석 AI",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "send",
+        "name": "Slack 결과 전송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "검사결과 읽기",
+      "특이사항이력 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "28-자재 특이사항 조회.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "패키지엔지니어팀",
+      "멤버": "최한슬, 이지은, 김경규 (3명)",
+      "난이도": "상"
+    },
+    "problem": "검사 중 담당자 조회를 위해 물리적으로 이동해야 함. 골든타임 지연.",
+    "implementation": "**핵심 흐름:** LIMS → SharePoint → n8n 연동 → 즉시 조회 → 모바일 전송\n\n### 워크숍 접근\n\n1. **Webhook / Form Trigger** — 자재코드 입력 시 조회\n2. **HTTP Request** — SharePoint(MS Graph API)에서 특이사항 데이터 조회\n3. **AI Agent** — 특이사항 핵심 요약, RAG 기반 해결방안 제시\n4. **Teams 노드** — 결과를 모바일로 전송\n\n### 단계별 실습\n\n- **1단계:** Form에서 자재코드 입력 → 엑셀에서 검색 (Spreadsheet + Code)\n- **2단계:** 검색 결과를 Teams/메일로 전송\n- **3단계:** AI로 특이사항 요약 생성\n- **4단계 (심화):** RAG 구현 (Vector Store + AI Agent)",
+    "systems": [
+      {
+        "name": "LIMS",
+        "purpose": "검사 데이터",
+        "method": "엑셀 또는 SharePoint 경유"
+      },
+      {
+        "name": "SharePoint",
+        "purpose": "특이사항 데이터",
+        "method": "MS Graph API (HTTP Request)"
+      }
+    ],
+    "notes": "- RAG 구현이 포함된 과제. n8n AI Agent + Vector Store 노드로 가능하지만 난이도 높음\n- 파워앱스 연동은 Open Lab 범위 밖 — n8n으로 \"조회 → 응답\" 파이프라인만 구현\n- \"조회 시간 80% 단축\" 목표\n- LIMS 데이터가 이미 SharePoint에 올라간다면 LIMS 직접 연동 불필요"
+  },
+  {
+    "num": "29",
+    "display_name": "#29 협력사 실적 진도관리",
+    "description": "협력사 실적 진도관리",
+    "trigger": "schedule",
+    "trigger_detail": "매일 오전",
+    "node_count": 11,
+    "stickies": [
+      "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+      "## 2. AI 분석\nAI Agent가 데이터를 분석하고 구조화된 결과를 반환",
+      "## 3. 결과 전달\n조건 판단 후 Slack 채널로 알림 발송"
+    ],
+    "flow_steps": [
+      {
+        "icon": "clock",
+        "name": "매일 오전",
+        "type": "트리거",
+        "desc": "매일 자동 실행"
+      },
+      {
+        "icon": "data",
+        "name": "실적 파일 위치 가져오기",
+        "type": "데이터 설정",
+        "desc": "변수: file-path"
+      },
+      {
+        "icon": "download",
+        "name": "실적 파일 읽기",
+        "type": "HTTP 요청",
+        "desc": "Excel 파일 다운로드"
+      },
+      {
+        "icon": "extract",
+        "name": "엑셀 데이터 추출",
+        "type": "파일 추출",
+        "desc": "Excel → JSON 변환"
+      },
+      {
+        "icon": "merge",
+        "name": "데이터 집계",
+        "type": "집계",
+        "desc": "분산된 행 데이터를 하나로 취합"
+      },
+      {
+        "icon": "ai",
+        "name": "실적 분석 AI",
+        "type": "AI Agent",
+        "desc": "xAI Grok 모델로 데이터 분석 및 판단"
+      },
+      {
+        "icon": "branch",
+        "name": "알림 필요 여부",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "알림 메일 발송",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [
+      "실적 파일 읽기"
+    ],
+    "ai_type": "AI Agent (Grok)",
+    "gif_file": "29-협력사 실적 진도관리.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "협력생산팀",
+      "멤버": "박승흠, 전성우, 홍영표 (3명)",
+      "난이도": "상"
+    },
+    "problem": "SRM/SAP/MES 데이터가 통합되지 않음. 부진 인지가 D+1~2 지연. 특이사항 자산화 실패.",
+    "implementation": "**핵심 흐름:** 목표/실적 자동 수집 → 부진 협력사 선정 → 알림 자동 생성\n\n### 워크숍 접근\n\n1. **Schedule Trigger** — 매일 아침 자동 수집\n2. **Spreadsheet File 노드** — SRM/SAP에서 내보낸 실적 데이터 읽기\n3. **Code 노드** — 목표 대비 실적 비교, 부진 판정\n4. **Gmail/Teams 노드** — 부진 협력사 담당자 알림\n\n### 단계별 실습\n\n- **1단계:** 엑셀에서 목표/실적 데이터 읽기\n- **2단계:** 목표 대비 달성률 계산 + 부진 기준 필터 (Code + IF)\n- **3단계:** 부진 협력사 알림 메일 자동 생성\n- **4단계 (심화):** AI로 과거 데이터 기반 목표 추천, 부진 원인 분석",
+    "systems": [
+      {
+        "name": "SRM",
+        "purpose": "협력사 납기/실적",
+        "method": "엑셀 내보내기"
+      },
+      {
+        "name": "SAP",
+        "purpose": "발주/실적 데이터",
+        "method": "엑셀 또는 OData"
+      },
+      {
+        "name": "MES",
+        "purpose": "생산 실적",
+        "method": "SAP 경유 또는 엑셀"
+      }
+    ],
+    "notes": "- \"분석 1.5시간 → 10분\" 목표\n- #30과 같은 부서(협력생산팀) — 공통 데이터 수집 모듈 공유 가능\n- 멘토링 시 #30과 합동 세션 권장\n- 엑셀 우회로 시작하되, SAP OData가 열려 있으면 직접 연동으로 전환"
+  },
+  {
+    "num": "30",
+    "display_name": "#30 협력업체 리스크 감지",
+    "description": "협력업체 리스크 감지",
+    "trigger": "form",
+    "trigger_detail": "보고자, Teams 메시지",
+    "node_count": 7,
+    "stickies": [
+      "## 1. 입력\nTeams 이슈 메시지\n보고자 입력",
+      "## 2. AI 분류\nLow / Medium / High\n리스크 등급 판정",
+      "## 3. 등급별 알림\nLow: 기록\nMed: 주의\nHigh: 긴급"
+    ],
+    "flow_steps": [
+      {
+        "icon": "form",
+        "name": "Teams 메시지 입력",
+        "type": "폼 트리거",
+        "desc": "입력 필드: 보고자, Teams 메시지"
+      },
+      {
+        "icon": "data",
+        "name": "입력 정리",
+        "type": "데이터 설정",
+        "desc": "변수: reporter, message"
+      },
+      {
+        "icon": "branch",
+        "name": "리스크 분류",
+        "type": "조건 분기",
+        "desc": "결과에 따라 처리 경로 분기"
+      },
+      {
+        "icon": "send",
+        "name": "Low 기록",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      },
+      {
+        "icon": "send",
+        "name": "Medium 알림",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      },
+      {
+        "icon": "send",
+        "name": "High 긴급 알림",
+        "type": "Slack 전송",
+        "desc": "분석 결과를 Slack 채널로 발송"
+      }
+    ],
+    "data_sources": [],
+    "ai_type": "",
+    "gif_file": "30-협력업체 리스크 감지.gif",
+    "team_info": {
+      "회사": "KKM (한국콜마)",
+      "팀": "협력생산팀",
+      "멤버": "김동욱, 신원철, 박단비 (3명)",
+      "난이도": "상"
+    },
+    "problem": "Teams에서 보고된 이슈가 SRM에 반영되지 않음. 품질/일정 지연을 사전 감지할 수 없다.",
+    "implementation": "**핵심 흐름:** Teams 메시지/이미지 자동 수집 → 리스크 분류 (Low/Med/High) → SRM 일정 변경 유도\n\n### 워크숍 접근\n\n1. **MS Teams Trigger** — 특정 채널 메시지 모니터링\n2. **AI Agent** — 메시지에서 생산/품질 키워드 추출, 리스크 분류\n3. **IF/Switch 노드** — 리스크 등급별 분기\n4. **Gmail/Teams 노드** — 고위험 건 즉시 알림\n\n### 단계별 실습\n\n- **1단계:** Teams Trigger로 메시지 수신 + 내용 출력\n- **2단계:** AI로 메시지 분류 (생산이슈/품질이슈/일반)\n- **3단계:** 리스크 등급 판정 → 등급별 알림\n- **4단계 (심화):** 이미지 분석 (불량 사진 판독), 납기 지연 예측",
+    "systems": [
+      {
+        "name": "Teams",
+        "purpose": "메시지/이미지 수집",
+        "method": "n8n MS Teams 노드 (OAuth2)"
+      },
+      {
+        "name": "SRM",
+        "purpose": "일정 변경",
+        "method": "엑셀 생성 → 수동 반영"
+      }
+    ],
+    "notes": "- 이미지 분석까지 포함 — 14개 과제 중 가장 도전적\n- SRM 쓰기는 현실적으로 어려움 → \"SRM 변경 요청서 자동 생성 → 담당자가 반영\" 패턴\n- #29와 같은 부서 — 데이터 수집 기반 공유\n- GPT-4o Vision으로 불량 사진 분석은 가능하지만, 정확도는 도메인 학습 필요"
+  }
+];
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function parseSticky(md) {
+  const lines = md.split('\n');
+  let title = '';
+  const body = [];
+  for (const l of lines) {
+    if (l.startsWith('## ')) title = l.replace(/^##\s*/, '');
+    else body.push(l);
+  }
+  return { title, body: body.join('\n').trim() };
+}
+
+function triggerLabel(t) {
+  return t === 'schedule' ? '스케줄 자동실행' : '폼 입력 트리거';
+}
+
+// ── Sidebar ──────────────────────────────────────────
+const teamList = document.getElementById('teamList');
+
+DATA.forEach((item, idx) => {
+  const el = document.createElement('div');
+  el.className = 'team-item';
+  el.innerHTML = `
+    <span class="team-num">${esc(item.num)}</span>
+    <div class="team-info">
+      <div class="team-name">${esc(item.description)}</div>
+      <div class="team-meta">
+        <span class="trigger-dot ${item.trigger}"></span>
+        ${item.trigger === 'schedule' ? '스케줄' : '폼'}
+        &middot; ${item.node_count}노드
+      </div>
+    </div>
+  `;
+  el.addEventListener('click', () => selectTeam(idx));
+  teamList.appendChild(el);
+});
+
+// ── Select Team ──────────────────────────────────────
+let activeIdx = -1;
+
+function selectTeam(idx) {
+  if (activeIdx === idx) return;
+  activeIdx = idx;
+
+  document.querySelectorAll('.team-item').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+
+  const item = DATA[idx];
+  document.getElementById('welcome').style.display = 'none';
+  const detail = document.getElementById('detail');
+  detail.style.display = 'block';
+
+  // Overview cards from stickies
+  let overviewHtml = '';
+  if (item.stickies && item.stickies.length > 0) {
+    const cards = item.stickies.map(md => {
+      const s = parseSticky(md);
+      return `<div class="overview-card"><h3>${esc(s.title)}</h3><p>${esc(s.body)}</p></div>`;
+    }).join('');
+    overviewHtml = `<div class="overview-cards">${cards}</div>`;
+  }
+
+  // Node flow
+  let flowHtml = '';
+  if (item.flow_steps && item.flow_steps.length > 0) {
+    const items = item.flow_steps.map(s => `
+      <div class="flow-item">
+        <div class="flow-icon ${s.icon}">${ICON_MAP[s.icon] || '&#9881;'}</div>
+        <div class="flow-body">
+          <div class="flow-name">${esc(s.name)}<span class="flow-type">${esc(s.type)}</span></div>
+          <div class="flow-desc">${esc(s.desc)}</div>
+        </div>
+      </div>
+    `).join('');
+    flowHtml = `
+      <div class="section-title">노드 흐름</div>
+      <div class="flow-list">${items}</div>
+    `;
+  }
+
+  // Form fields
+  let formHtml = '';
+  if (item.trigger === 'form' && item.trigger_detail) {
+    const tags = item.trigger_detail.split(', ').map(f =>
+      `<span class="form-tag">${esc(f)}</span>`
+    ).join('');
+    formHtml = `
+      <div class="section-title">입력 필드</div>
+      <div class="form-fields" style="margin-bottom:36px;">${tags}</div>
+    `;
+  }
+
+  // Requirement spec
+  let reqHtml = '';
+  if (item.team_info || item.problem || item.implementation || item.systems || item.notes) {
+    let chips = '';
+    if (item.team_info) {
+      const ti = item.team_info;
+      if (ti.company) chips += `<span class="req-team-chip"><strong>회사</strong>${esc(ti.company)}</span>`;
+      if (ti.department) chips += `<span class="req-team-chip"><strong>팀</strong>${esc(ti.department)}</span>`;
+      if (ti.members) chips += `<span class="req-team-chip"><strong>멤버</strong>${esc(ti.members)}</span>`;
+      if (ti.difficulty) chips += `<span class="req-team-chip"><strong>난이도</strong>${esc(ti.difficulty)}</span>`;
+    }
+
+    let problemCard = '';
+    if (item.problem) {
+      problemCard = `<div class="req-problem"><h4>과제 배경</h4><p>${esc(item.problem)}</p></div>`;
+    }
+
+    let implCard = '';
+    if (item.implementation) {
+      const implHtml = item.implementation
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/### (.+)/g, '<h4 style="margin-top:16px;margin-bottom:8px;font-size:16px;font-weight:700;color:var(--text-bright)">$1</h4>')
+        .replace(/^- (.+)/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul style="margin-left:20px">$1</ul>')
+        .replace(/\n{2,}/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+      implCard = `<div class="req-impl"><h4>구현 방향</h4><div class="req-impl-body">${implHtml}</div></div>`;
+    }
+
+    let sysTable = '';
+    if (item.systems && item.systems.length > 0) {
+      const rows = item.systems.map(s =>
+        `<tr><td><strong>${esc(s.name)}</strong></td><td>${esc(s.purpose)}</td><td>${esc(s.method)}</td></tr>`
+      ).join('');
+      sysTable = `<div class="req-systems"><table>
+        <thead><tr><th>시스템</th><th>용도</th><th>연동 방식</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+    }
+
+    let notesBlock = '';
+    if (item.notes) {
+      const noteItems = item.notes.split('\n')
+        .map(l => l.replace(/^-\s*/, '').trim())
+        .filter(l => l)
+        .map(l => `<li>${esc(l)}</li>`).join('');
+      notesBlock = `<div class="req-notes"><ul>${noteItems}</ul></div>`;
+    }
+
+    reqHtml = `
+      <div class="req-section">
+        <div class="section-title">요구사항 정의서</div>
+        ${chips ? `<div class="req-team-bar">${chips}</div>` : ''}
+        ${problemCard}
+        ${implCard}
+        ${sysTable}
+        ${notesBlock}
+      </div>
+    `;
+  }
+
+  detail.innerHTML = `
+    <div class="wf-header">
+      <div class="wf-title">${esc(item.display_name)}</div>
+      <div class="wf-badges">
+        <span class="badge ${item.trigger}">${triggerLabel(item.trigger)}</span>
+        <span class="badge nodes">${item.node_count}개 노드</span>
+        ${item.ai_type ? `<span class="badge ai">${esc(item.ai_type)}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="gif-trigger" onclick="openGifModal(${idx})">
+      <div class="play-icon">&#9654;</div>
+      <div>
+        <div class="play-label">시연 영상 보기</div>
+        <div class="play-sub">클릭하여 GIF 재생</div>
+      </div>
+    </div>
+
+    ${SHOW_JSON_DOWNLOAD ? `<a class="json-download" href="json/${item.gif_file.replace('.gif', '.json')}" download>
+      <span class="dl-icon">&#128229;</span>워크플로우 JSON 다운로드
+    </a>` : ''}
+
+    ${overviewHtml}
+    ${formHtml}
+    ${flowHtml}
+    ${reqHtml}
+  `;
+}
+
+// ── GIF Modal ────────────────────────────────────────
+const gifModal = document.getElementById('gifModal');
+const gifModalImg = document.getElementById('gifModalImg');
+const gifModalTitle = document.getElementById('gifModalTitle');
+const gifModalClose = document.getElementById('gifModalClose');
+let gifZoom = 1;
+
+function openGifModal(idx) {
+  const item = DATA[idx];
+  gifZoom = 1;
+  gifModalImg.style.transform = '';
+  gifModalImg.classList.remove('zoomed');
+  gifModalImg.src = 'gifs/' + item.gif_file;
+  gifModalTitle.textContent = item.display_name;
+  gifModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGifModal() {
+  gifModal.classList.remove('open');
+  gifModalImg.src = '';
+  gifModalImg.style.transform = '';
+  gifModalImg.classList.remove('zoomed');
+  gifZoom = 1;
+  document.body.style.overflow = '';
+}
+
+gifModalImg.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (gifZoom === 1) {
+    gifZoom = 2;
+    gifModalImg.style.transform = 'scale(2)';
+    gifModalImg.classList.add('zoomed');
+  } else {
+    gifZoom = 1;
+    gifModalImg.style.transform = '';
+    gifModalImg.classList.remove('zoomed');
+  }
+});
+
+gifModal.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  gifZoom = Math.max(0.5, Math.min(5, gifZoom + (e.deltaY > 0 ? -0.3 : 0.3)));
+  gifModalImg.style.transform = `scale(${gifZoom})`;
+  gifModalImg.classList.toggle('zoomed', gifZoom > 1);
+}, { passive: false });
+
+gifModal.addEventListener('click', (e) => {
+  if (e.target === gifModal) closeGifModal();
+});
+gifModalClose.addEventListener('click', closeGifModal);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeGifModal();
+});
+
+// ── Theme Toggle ─────────────────────────────────────
+const themeToggle = document.getElementById('themeToggle');
+const html = document.documentElement;
+const saved = localStorage.getItem('showcase-theme');
+if (saved) {
+  html.setAttribute('data-theme', saved);
+  themeToggle.innerHTML = saved === 'light' ? '&#9728;' : '&#9790;';
+}
+
+themeToggle.addEventListener('click', () => {
+  const current = html.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('showcase-theme', next);
+  themeToggle.innerHTML = next === 'light' ? '&#9728;' : '&#9790;';
+});
+
+// ── Sidebar Toggle ──────────────────────────────────
+const sidebarEl = document.querySelector('.sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+
+sidebarToggle.addEventListener('click', () => {
+  sidebarEl.classList.toggle('collapsed');
+  localStorage.setItem('showcase-sidebar', sidebarEl.classList.contains('collapsed') ? 'collapsed' : 'open');
+});
+
+const savedSidebar = localStorage.getItem('showcase-sidebar');
+if (savedSidebar === 'collapsed') sidebarEl.classList.add('collapsed');
+
+selectTeam(0);
+</script>
+
+</body>
+</html>

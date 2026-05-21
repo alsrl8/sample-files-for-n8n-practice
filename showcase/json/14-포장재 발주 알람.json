@@ -1,0 +1,428 @@
+{
+  "updatedAt": "2026-05-21T04:57:35.880Z",
+  "createdAt": "2026-05-20T09:05:16.266Z",
+  "id": "O7stVkhnp1ihHMwC",
+  "name": "[콜마교육] #14 포장재 발주 알람",
+  "description": "매일 포장재 발주 현황 Excel을 읽어 AI가 SO-PO 매칭에서 미발주/단납기/입고지연을 식별하고, 이상 시 Gmail로 알림을 발송한다.",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "97c93055-076a-4576-90ff-a91be40caa87",
+      "name": "매일 실행",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['file-path'] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "b469a6a4-8674-4a76-93f5-9106c52f3a8a",
+      "name": "포장재 발주 현황 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "headerRow": true
+        }
+      },
+      "id": "11ca42cc-86ca-4b64-b81b-eba9293af67d",
+      "name": "Excel 데이터 추출",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 포장재 발주 현황 데이터를 분석하라. SO-PO 매칭에서 미발주, 단납기, 입고지연 항목을 식별하라. 이상 항목이 있으면 alert_needed를 true로, 없으면 false로 설정하라.\n\n데이터:\n{{ JSON.stringify($json.data) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 콜마교육 포장재 발주 관리 전문가입니다. SO(Sales Order)와 PO(Purchase Order) 매칭 데이터에서 미발주(PO 미생성), 단납기(납기일 촉박), 입고지연(예정일 초과) 항목을 정확히 식별하고, 담당자에게 보낼 알림 이메일을 작성합니다."
+        }
+      },
+      "id": "29de59ab-9350-493a-9400-2e10ff4c5b31",
+      "name": "포장재 발주 이상 분석",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1096,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "80476374-1652-4c35-8b37-7f43c0ad2bf1",
+      "name": "xAI Grok Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        336
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "90795f25-4d96-4ac4-90c9-39fd9846138a",
+      "name": "Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"alert_needed\": true, \"summary\": \"이상 항목 요약\", \"email_subject\": \"알림 제목\", \"email_body\": \"알림 본문\" }"
+      },
+      "id": "f66bc385-6793-4216-9437-e40d797a3a12",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1296,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output.alert_needed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b5e412e9-08b6-4681-a644-73e54c5087d5",
+      "name": "알림 필요 여부",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=*{{ $json.output.email_subject }}*\n{{ $json.output.email_body }}",
+        "otherOptions": {}
+      },
+      "id": "ce0dae8d-13c0-4f6b-bf5d-a2f7738cc265",
+      "name": "발주 이상 알림 발송",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1728,
+        112
+      ],
+      "webhookId": "70b11f9b-f402-4232-8185-a6277287cbe2",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "30701f36-12f1-4d7d-9ff0-141b8fab2761",
+              "name": "file-path",
+              "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/O7stVkhnp1ihHMwC-포장재-발주-알람.xlsx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d3cea9d8-a0be-4ce5-889b-597f38684e62",
+      "name": "발주 현황 위치 가져오기",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "ce87641b-077e-41fe-82ac-d3e3a564b7b9",
+      "name": "데이터 집계",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. 데이터 수집\n스케줄 트리거 → 파일 경로 설정 → 엑셀 읽기 → 데이터 추출 → 집계",
+        "height": 240,
+        "width": 1060,
+        "color": 4
+      },
+      "id": "de11c4eb-cbd1-4bf1-aad2-bfc2dac9581b",
+      "name": "Sticky Note8633",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -114,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분석\nAI Agent가 데이터를 분석하고 구조화된 결과를 반환",
+        "height": 448,
+        "width": 452,
+        "color": 2
+      },
+      "id": "4423a605-6894-4316-8e42-758f52ebe126",
+      "name": "Sticky Note7f19",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        976,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 결과 전달\n조건 판단 후 Slack 채널로 알림 발송",
+        "height": 256,
+        "width": 376,
+        "color": 5
+      },
+      "id": "0022f3df-d91c-4a53-94e9-f11b96838d5d",
+      "name": "Sticky Note507e",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        32
+      ]
+    }
+  ],
+  "connections": {
+    "매일 실행": {
+      "main": [
+        [
+          {
+            "node": "발주 현황 위치 가져오기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "포장재 발주 현황 읽기": {
+      "main": [
+        [
+          {
+            "node": "Excel 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Excel 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "데이터 집계",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "포장재 발주 이상 분석": {
+      "main": [
+        [
+          {
+            "node": "알림 필요 여부",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "포장재 발주 이상 분석",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "포장재 발주 이상 분석",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "포장재 발주 이상 분석",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "알림 필요 여부": {
+      "main": [
+        [
+          {
+            "node": "발주 이상 알림 발송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "발주 현황 위치 가져오기": {
+      "main": [
+        [
+          {
+            "node": "포장재 발주 현황 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터 집계": {
+      "main": [
+        [
+          {
+            "node": "포장재 발주 이상 분석",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "fb98d69f-6f1b-40c6-bf57-847ca5b8e633",
+  "activeVersionId": null,
+  "versionCounter": 12,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:05:16.266Z",
+      "createdAt": "2026-05-20T09:05:16.266Z",
+      "role": "workflow:owner",
+      "workflowId": "O7stVkhnp1ihHMwC",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

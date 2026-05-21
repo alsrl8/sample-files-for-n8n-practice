@@ -1,0 +1,358 @@
+{
+  "updatedAt": "2026-05-21T04:52:24.484Z",
+  "createdAt": "2026-05-20T09:04:58.158Z",
+  "id": "WNpXPNsb9emDIk77",
+  "name": "[콜마교육] #30 협력업체 리스크 감지",
+  "description": "Form으로 Teams 메시지를 입력받아 Text Classifier로 Low/Medium/High 리스크를 분류하고, Medium은 기록, High는 긴급 알림을 Teams에 발송한다.",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "협력업체 리스크 감지",
+        "formDescription": "Teams 협력사 이슈 채널의 메시지를 붙여넣으면 리스크 등급을 자동 분류합니다.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "보고자",
+              "fieldName": "reporter",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Teams 메시지",
+              "fieldType": "textarea",
+              "fieldName": "teams_message",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "92cf51dc-6fa5-42ba-a0c8-42fb2f7460f4",
+      "name": "Teams 메시지 입력",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        256
+      ],
+      "webhookId": "0afa7cb7-8790-4c90-a3e1-c08d104ca9f1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "729fc62d-2adf-4ffc-ab2d-7f554527daf8",
+              "name": "reporter",
+              "value": "={{ $json.reporter }}",
+              "type": "string"
+            },
+            {
+              "id": "002a3657-d40f-4463-9d86-020ece8afa7b",
+              "name": "message",
+              "value": "={{ $json.teams_message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0801defb-a6fa-4177-8f78-98b4f858af9b",
+      "name": "입력 정리",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.message }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Low",
+              "description": "정상 운영, 이상 없음, 일정대로 진행 등 리스크 없는 메시지"
+            },
+            {
+              "category": "Medium",
+              "description": "색상 차이, 샘플 불량, 경미한 지연 등 모니터링 필요한 메시지"
+            },
+            {
+              "category": "High",
+              "description": "불량률 급등, 납기 지연, 라인 중단, 전수검사 필요 등 즉시 대응 필요한 메시지"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "당신은 제조업 협력사 리스크를 분류하는 전문가입니다.\n메시지의 심각도를 Low/Medium/High로 분류하세요.\n\nHigh 기준: 불량률 5% 이상, 납기 3일 이상 지연, 라인 중단, 전수검사\nMedium 기준: 경미한 품질 이슈, 1-2일 지연, 모니터링 필요\nLow 기준: 정상 운영, 일정대로 진행"
+        }
+      },
+      "id": "ffcc3b67-933c-4345-950b-1b0ff6941d23",
+      "name": "리스크 분류",
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        448,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "model": "grok-4.3",
+        "options": {}
+      },
+      "id": "b86630d6-e15d-429c-a716-b93265c4c43b",
+      "name": "xAI Grok 모델",
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        528,
+        512
+      ],
+      "credentials": {
+        "xAiApi": {
+          "id": "gkMJxwUMH039B4V0",
+          "name": "xAi mingi4754song private"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=:white_check_mark: *[협력사 정상]* (보고: {{ $json.reporter }})\n\n{{ $json.message }}",
+        "otherOptions": {}
+      },
+      "id": "6df6b206-bdaf-4b90-a9e5-d29edd10939a",
+      "name": "Low 기록",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        800,
+        64
+      ],
+      "webhookId": "7c8ab596-1913-43cf-bcc0-6981f9e9cb97",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=:warning: *[협력사 주의]* (보고: {{ $json.reporter }})\n\n{{ $json.message }}\n\n_모니터링 필요_",
+        "otherOptions": {}
+      },
+      "id": "5f588f34-f26d-4b2d-b324-4b638120fe60",
+      "name": "Medium 알림",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        800,
+        256
+      ],
+      "webhookId": "ddc3c426-a7e7-4d54-8bba-b699b7a9d4be",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM96C1G10",
+          "mode": "list",
+          "cachedResultName": "miles-test"
+        },
+        "text": "=:rotating_light: *[협력사 긴급]* (보고: {{ $json.reporter }})\n\n{{ $json.message }}\n\n*즉시 대응 필요*",
+        "otherOptions": {}
+      },
+      "id": "501ea77e-35b5-4826-afd2-bb6b17fba109",
+      "name": "High 긴급 알림",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        800,
+        448
+      ],
+      "webhookId": "4507bee9-4f05-4ddb-a944-ab064bd28b2f",
+      "credentials": {
+        "slackApi": {
+          "id": "uMdzErNvUxaoML3G",
+          "name": "Slack miles-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 1. 입력\nTeams 이슈 메시지\n보고자 입력",
+        "height": 260,
+        "width": 400,
+        "color": 4
+      },
+      "id": "fbf784e8-5b1e-4cd5-b797-fb067dc6c660",
+      "name": "Sticky Note d275",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI 분류\nLow / Medium / High\n리스크 등급 판정",
+        "height": 484,
+        "width": 272,
+        "color": 3
+      },
+      "id": "e78dde0a-13db-463a-8b3a-c7db2f9c984c",
+      "name": "Sticky Note 04cc",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        432,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. 등급별 알림\nLow: 기록\nMed: 주의\nHigh: 긴급",
+        "height": 668,
+        "width": 220,
+        "color": 6
+      },
+      "id": "f8eb8102-29f0-4f60-9a48-0a50830fe3a6",
+      "name": "Sticky Note de49",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        768,
+        -48
+      ]
+    }
+  ],
+  "connections": {
+    "Teams 메시지 입력": {
+      "main": [
+        [
+          {
+            "node": "입력 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "입력 정리": {
+      "main": [
+        [
+          {
+            "node": "리스크 분류",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok 모델": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "리스크 분류",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "리스크 분류": {
+      "main": [
+        [
+          {
+            "node": "Low 기록",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Medium 알림",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "High 긴급 알림",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "pinData": {},
+  "versionId": "90d64ae5-6f70-4701-94cc-6c25feb1e7c6",
+  "activeVersionId": null,
+  "versionCounter": 23,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-20T09:04:58.158Z",
+      "createdAt": "2026-05-20T09:04:58.158Z",
+      "role": "workflow:owner",
+      "workflowId": "WNpXPNsb9emDIk77",
+      "projectId": "ncJWdNyuSg3UzANu",
+      "project": {
+        "updatedAt": "2026-04-15T05:07:55.862Z",
+        "createdAt": "2026-04-15T02:45:24.795Z",
+        "id": "ncJWdNyuSg3UzANu",
+        "name": "민기 송 <miles@infograb.net>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-05-21T02:30:41.851Z",
+      "createdAt": "2026-05-21T02:30:41.851Z",
+      "id": "zCqLTSWhITlFn4zB",
+      "name": "kolma-openlab"
+    }
+  ],
+  "activeVersion": null
+}

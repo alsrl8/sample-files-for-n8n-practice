@@ -1,0 +1,442 @@
+{
+    "updatedAt": "2026-05-21T04:54:45.521Z",
+    "createdAt": "2026-05-20T09:05:05.544Z",
+    "id": "EouUl07bFUhFW5Hk",
+    "name": "[\ucf5c\ub9c8\uad50\uc721] #21 QC \uc8fc\uac04 \uc5c5\ubb34\ud45c \uc790\ub3d9 \uc0dd\uc131",
+    "description": "\ub9e4\uc8fc \uc6d4\uc694\uc77c \uc2dc\ud5d8\uc77c\uc815/\uc2dc\ud5d8\uc790\uc5ed\ub7c9 Excel\uc744 \uc77d\uc5b4 AI\uac00 13\uba85 \uc2dc\ud5d8\uc790\uc5d0\uac8c \ucd5c\uc801 \uc5c5\ubb34 \ubc30\uc815\uc744 \ucd94\ucc9c\ud558\uace0 xlsx\ub85c \ucd9c\ub825\ud55c\ub2e4.",
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "weeks",
+                            "triggerAtDay": [
+                                1
+                            ],
+                            "triggerAtHour": 9
+                        }
+                    ]
+                }
+            },
+            "id": "a1733aa1-d7c8-4865-80a7-690fc69aa89a",
+            "name": "\ub9e4\uc8fc \uc6d4\uc694\uc77c 09\uc2dc",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.3,
+            "position": [
+                -80,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $json['file-path-schedule'] }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file"
+                        }
+                    }
+                }
+            },
+            "id": "a0d4e722-c26f-4ad9-b39c-18d2bdabce40",
+            "name": "\uc2dc\ud5d8\uc77c\uc815 \uc77d\uae30",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                368,
+                16
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "xlsx",
+                "options": {}
+            },
+            "id": "994ef8a1-d999-4f45-8b08-1339212399af",
+            "name": "\uc2dc\ud5d8\uc77c\uc815 \ucd94\ucd9c",
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1.1,
+            "position": [
+                592,
+                16
+            ]
+        },
+        {
+            "parameters": {},
+            "id": "19442c9b-2489-4b1e-b01b-81b8668995ea",
+            "name": "\uc77c\uc815+\uc5ed\ub7c9 \ubcd1\ud569",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                816,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $json['file-path-capability'] }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file"
+                        }
+                    }
+                }
+            },
+            "id": "c677201a-379a-4309-aa12-0bea82e13cc4",
+            "name": "\uc2dc\ud5d8\uc790\uc5ed\ub7c9 \uc77d\uae30",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                368,
+                208
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "xlsx",
+                "options": {}
+            },
+            "id": "43b6e591-583b-4613-8078-6a97c3a74632",
+            "name": "\uc2dc\ud5d8\uc790\uc5ed\ub7c9 \ucd94\ucd9c",
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1.1,
+            "position": [
+                592,
+                208
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=\uc774\ubc88 \uc8fc \uc2dc\ud5d8 \uc77c\uc815\uacfc \uc2dc\ud5d8\uc790 \uc5ed\ub7c9/\uac00\uc6a9\uc2dc\uac04 \ub370\uc774\ud130\ub97c \ubd84\uc11d\ud558\uc5ec \uc5c5\ubb34\ub97c \ubc30\uc815\ud558\ub77c.\n\n\ub370\uc774\ud130:\n{{ JSON.stringify($json.data) }}\n\n\ubc30\uc815 \uaddc\uce59:\n1. \uc2dc\ud5d8 \ub09c\uc774\ub3c4\uc640 \uc608\uc0c1 \uc18c\uc694\uc2dc\uac04 \ub300\ube44 \uc2dc\ud5d8\uc790 \uc5ed\ub7c9 \uc218\uc900 \ub9e4\uce6d\n2. \uc2dc\ud5d8\uc790 \uc804\ubb38 \ubd84\uc57c \uc6b0\uc120 \ubc30\uc815\n3. \uc2dc\ud5d8\uc790 \uac00\uc6a9\uc2dc\uac04 \ucd08\uacfc \uae08\uc9c0\n4. 13\uba85 \uc2dc\ud5d8\uc790\uc5d0\uac8c \uade0\ub4f1 \ubd84\ubc30\n5. \ubc30\uc815 \ubd88\uac00 \uc5c5\ubb34\ub294 unassigned_tasks\uc5d0 \ud3ec\ud568",
+                "hasOutputParser": true,
+                "options": {
+                    "systemMessage": "QC \uc2dc\ud5d8 \uc5c5\ubb34 \ubc30\uc815 \uc804\ubb38\uac00. \uc2dc\ud5d8 \ub09c\uc774\ub3c4/\uc18c\uc694\uc2dc\uac04 vs \uc2dc\ud5d8\uc790 \uc5ed\ub7c9/\uac00\uc6a9\uc2dc\uac04\uc744 \ubd84\uc11d\ud558\uc5ec \ucd5c\uc801 \ubc30\uc815\uc744 \ucd94\ucc9c\ud55c\ub2e4."
+                }
+            },
+            "id": "cc662281-94b3-4187-abc7-51afe047b6fa",
+            "name": "QC \uc5c5\ubb34\ubc30\uc815 AI",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3.1,
+            "position": [
+                1200,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "model": "grok-4.3",
+                "options": {}
+            },
+            "id": "2e1428a4-f4bc-4f3b-b2ab-0c57259d6511",
+            "name": "xAI Grok Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+            "typeVersion": 1,
+            "position": [
+                1168,
+                320
+            ],
+            "credentials": {
+                "xAiApi": {
+                    "id": "gkMJxwUMH039B4V0",
+                    "name": "xAi mingi4754song private"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsonSchemaExample": "{ \"assignments\": [{ \"tester_name\": \"\ud64d\uae38\ub3d9\", \"task_name\": \"\uacbd\ub3c4\uc2dc\ud5d8\", \"reason\": \"\ud574\ub2f9 \uc2dc\ud5d8 \uc804\ubb38\uac00, \uac00\uc6a9\uc2dc\uac04 \ucda9\ubd84\" }], \"unassigned_tasks\": [] }"
+            },
+            "id": "500c50e7-4fdc-4fb0-886c-48608a279f66",
+            "name": "\ubc30\uc815 \uacb0\uacfc \ud30c\uc11c",
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+            "typeVersion": 1.3,
+            "position": [
+                1424,
+                320
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "xlsx",
+                "options": {
+                    "fileName": "=QC_\uc8fc\uac04\uc5c5\ubb34\ud45c_{{ $now.toFormat('yyyy-MM-dd') }}.xlsx"
+                }
+            },
+            "id": "84bcf6f8-62c5-4720-a5c6-a48bd7a768d6",
+            "name": "\ubc30\uc815\ud45c \uc5d1\uc140 \uc0dd\uc131",
+            "type": "n8n-nodes-base.convertToFile",
+            "typeVersion": 1.1,
+            "position": [
+                1552,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "f0193a33-50b8-4a05-8416-53cec05729d0",
+                            "name": "file-path-schedule",
+                            "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/EouUl07bFUhFW5Hk-QC-\uc8fc\uac04-\uc5c5\ubb34\ud45c/source1-\uc2dc\ud5d8\uc77c\uc815.xlsx",
+                            "type": "string"
+                        },
+                        {
+                            "id": "1d86e3e8-a540-4794-9223-d2996f65e2c0",
+                            "name": "file-path-capability",
+                            "value": "https://raw.githubusercontent.com/alsrl8/sample-files-for-n8n-practice/main/EouUl07bFUhFW5Hk-QC-\uc8fc\uac04-\uc5c5\ubb34\ud45c/source2-\uc2dc\ud5d8\uc790\uc5ed\ub7c9.xlsx",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "23363c3a-dc68-4366-b1c7-dab4efe6926b",
+            "name": "\ud30c\uc77c \uacbd\ub85c \uc124\uc815",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                144,
+                112
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## 1. \ub370\uc774\ud130 \uc218\uc9d1\n\ud2b8\ub9ac\uac70 \u2192 \ud30c\uc77c \uacbd\ub85c \uc124\uc815 \u2192 2\uac1c \uc18c\uc2a4 \ubcd1\ub82c \uc77d\uae30 \u2192 \ubcd1\ud569",
+                "height": 368,
+                "width": 1236,
+                "color": 4
+            },
+            "id": "ce05dfa7-9b58-4060-8c5c-97a6b4ca4bb0",
+            "name": "Sticky Note2f45",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                -128,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## 2. AI \ubd84\uc11d\nAI Agent\uac00 \ub450 \ub370\uc774\ud130\uc14b\uc744 \uad50\ucc28 \ubd84\uc11d",
+                "height": 448,
+                "width": 420,
+                "color": 2
+            },
+            "id": "187ad29c-4640-4f53-9e66-3b5e7d6e0afe",
+            "name": "Sticky Notec59f",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## 3. \uacb0\uacfc \uc804\ub2ec\nSlack/\ud30c\uc77c\ub85c \uacb0\uacfc \uc804\ub2ec",
+                "height": 304,
+                "width": 182,
+                "color": 5
+            },
+            "id": "939cc7db-1229-48f3-9303-3e5e3ffccc4f",
+            "name": "Sticky Note4b2e",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                1552,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "aggregate": "aggregateAllItemData",
+                "options": {}
+            },
+            "id": "680641c1-b913-49fa-997d-ce4d08802cd3",
+            "name": "\ub370\uc774\ud130 \uc9d1\uacc4",
+            "type": "n8n-nodes-base.aggregate",
+            "typeVersion": 1,
+            "position": [
+                976,
+                112
+            ]
+        }
+    ],
+    "connections": {
+        "xAI Grok Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "QC \uc5c5\ubb34\ubc30\uc815 AI",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\ub9e4\uc8fc \uc6d4\uc694\uc77c 09\uc2dc": {
+            "main": [
+                [
+                    {
+                        "node": "\ud30c\uc77c \uacbd\ub85c \uc124\uc815",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc2dc\ud5d8\uc77c\uc815 \uc77d\uae30": {
+            "main": [
+                [
+                    {
+                        "node": "\uc2dc\ud5d8\uc77c\uc815 \ucd94\ucd9c",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc2dc\ud5d8\uc77c\uc815 \ucd94\ucd9c": {
+            "main": [
+                [
+                    {
+                        "node": "\uc77c\uc815+\uc5ed\ub7c9 \ubcd1\ud569",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc77c\uc815+\uc5ed\ub7c9 \ubcd1\ud569": {
+            "main": [
+                [
+                    {
+                        "node": "\ub370\uc774\ud130 \uc9d1\uacc4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc2dc\ud5d8\uc790\uc5ed\ub7c9 \uc77d\uae30": {
+            "main": [
+                [
+                    {
+                        "node": "\uc2dc\ud5d8\uc790\uc5ed\ub7c9 \ucd94\ucd9c",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\uc2dc\ud5d8\uc790\uc5ed\ub7c9 \ucd94\ucd9c": {
+            "main": [
+                [
+                    {
+                        "node": "\uc77c\uc815+\uc5ed\ub7c9 \ubcd1\ud569",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "QC \uc5c5\ubb34\ubc30\uc815 AI": {
+            "main": [
+                [
+                    {
+                        "node": "\ubc30\uc815\ud45c \uc5d1\uc140 \uc0dd\uc131",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\ubc30\uc815 \uacb0\uacfc \ud30c\uc11c": {
+            "ai_outputParser": [
+                [
+                    {
+                        "node": "QC \uc5c5\ubb34\ubc30\uc815 AI",
+                        "type": "ai_outputParser",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\ud30c\uc77c \uacbd\ub85c \uc124\uc815": {
+            "main": [
+                [
+                    {
+                        "node": "\uc2dc\ud5d8\uc77c\uc815 \uc77d\uae30",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "\uc2dc\ud5d8\uc790\uc5ed\ub7c9 \uc77d\uae30",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "\ub370\uc774\ud130 \uc9d1\uacc4": {
+            "main": [
+                [
+                    {
+                        "node": "QC \uc5c5\ubb34\ubc30\uc815 AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "availableInMCP": true,
+        "binaryMode": "separate"
+    },
+    "staticData": null,
+    "meta": {
+        "aiBuilderAssisted": true,
+        "builderVariant": "mcp"
+    },
+    "pinData": {},
+    "versionId": "87511f03-8ed3-44a4-9887-114ef26bd95b",
+    "activeVersionId": null,
+    "versionCounter": 13,
+    "triggerCount": 0,
+    "shared": [
+        {
+            "updatedAt": "2026-05-20T09:05:05.544Z",
+            "createdAt": "2026-05-20T09:05:05.544Z",
+            "role": "workflow:owner",
+            "workflowId": "EouUl07bFUhFW5Hk",
+            "projectId": "ncJWdNyuSg3UzANu",
+            "project": {
+                "updatedAt": "2026-04-15T05:07:55.862Z",
+                "createdAt": "2026-04-15T02:45:24.795Z",
+                "id": "ncJWdNyuSg3UzANu",
+                "name": "\ubbfc\uae30 \uc1a1 <miles@infograb.net>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "37174ab9-c289-40f8-bb1a-6354cc6c8870"
+            }
+        }
+    ],
+    "tags": [
+        {
+            "updatedAt": "2026-05-21T02:30:41.851Z",
+            "createdAt": "2026-05-21T02:30:41.851Z",
+            "id": "zCqLTSWhITlFn4zB",
+            "name": "kolma-openlab"
+        }
+    ],
+    "activeVersion": null
+}
