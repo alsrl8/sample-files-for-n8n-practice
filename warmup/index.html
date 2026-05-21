@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warm-up — n8n 첫 워크플로우 만들기</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #88B840; --teal: #087878; --blue: #6196FF;
+    --dk: #1B5E20; --bg: #F8FAF5; --card: #fff; --border: #E0E8D0;
+    --muted: #7A8A6A; --text: #2A2A2A;
+  }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    padding: 20px; max-width: 900px; margin: 0 auto;
+  }
+  header {
+    background: linear-gradient(135deg, var(--dk), var(--teal));
+    color: #fff; padding: 24px 28px; border-radius: 16px; margin-bottom: 24px;
+  }
+  header h1 { font-size: 24px; font-weight: 700; }
+  header .sub { font-size: 14px; opacity: .8; margin-top: 6px; }
+  .step {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; margin-bottom: 20px; overflow: hidden;
+  }
+  .step-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .step-num.s1 { background: var(--green); }
+  .step-num.s2 { background: var(--teal); }
+  .step-num.s3 { background: var(--blue); }
+  .step-num.s4 { background: #509050; }
+  .step-num.s5 { background: #F57C00; }
+  .step-title { font-size: 18px; font-weight: 700; color: var(--dk); }
+  .step-desc {
+    font-size: 14px; color: var(--muted); margin-left: auto; white-space: nowrap;
+  }
+  .step-body { padding: 20px; }
+  .step-body video {
+    width: 100%; border-radius: 10px; background: #000;
+  }
+  .step-body .nodes {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 12px; font-size: 13px;
+  }
+  .node-tag {
+    padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 12px;
+  }
+  .node-tag.trigger { background: #E8F5E9; color: #2E7D32; }
+  .node-tag.set { background: #E0F2F1; color: #00695C; }
+  .node-tag.if { background: #E3F2FD; color: #1565C0; }
+  .node-tag.table { background: #F1F8E9; color: #33691E; }
+  .node-tag.cred { background: #FFF3E0; color: #E65100; }
+  .arrow { color: var(--muted); font-weight: 700; }
+  .placeholder {
+    display: flex; align-items: center; justify-content: center;
+    height: 200px; background: #F5F7F0; border-radius: 10px;
+    color: var(--muted); font-size: 15px; font-weight: 600;
+  }
+  .back-link {
+    display: inline-block; margin-bottom: 16px;
+    color: var(--teal); text-decoration: none; font-size: 14px; font-weight: 600;
+  }
+  .back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="../showcase/">&larr; 쇼케이스로 돌아가기</a>
+
+<header>
+  <h1>Warm-up — n8n 첫 워크플로우 만들기</h1>
+  <div class="sub">5단계로 n8n의 핵심 기능을 따라하며 익힙니다</div>
+</header>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num s1">1</div>
+    <div class="step-title">데이터를 만든다</div>
+    <div class="step-desc">Credential 불필요</div>
+  </div>
+  <div class="step-body">
+    <video controls preload="metadata" src="warmup1.mp4"></video>
+    <div class="nodes">
+      <span class="node-tag trigger">Manual Trigger</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag set">Edit Fields</span>
+      <span style="color:var(--muted); font-size:12px; margin-left:8px;">name="홍길동", score=85</span>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num s2">2</div>
+    <div class="step-title">조건으로 분기한다</div>
+    <div class="step-desc">Credential 불필요</div>
+  </div>
+  <div class="step-body">
+    <video controls preload="metadata" src="warmup2.mp4"></video>
+    <div class="nodes">
+      <span class="node-tag trigger">Manual Trigger</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag set">Edit Fields</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag if">IF (score &ge; 80)</span>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num s3">3</div>
+    <div class="step-title">이전 데이터를 가져온다</div>
+    <div class="step-desc">Credential 불필요</div>
+  </div>
+  <div class="step-body">
+    <div class="placeholder">영상 준비 중</div>
+    <div class="nodes">
+      <span class="node-tag trigger">Manual Trigger</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag set">Edit Fields</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag if">IF</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag set">Edit Fields ({{ $json.name }} 표현식)</span>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num s4">4</div>
+    <div class="step-title">데이터를 저장한다</div>
+    <div class="step-desc">Credential 불필요</div>
+  </div>
+  <div class="step-body">
+    <div class="placeholder">영상 준비 중</div>
+    <div class="nodes">
+      <span class="node-tag trigger">Manual Trigger</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag set">Edit Fields</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag if">IF</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag set">Edit Fields</span>
+      <span class="arrow">&rarr;</span>
+      <span class="node-tag table">Data Table (Insert Row)</span>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header">
+    <div class="step-num s5">5</div>
+    <div class="step-title">외부 서비스 연결</div>
+    <div class="step-desc">Credential 필요 (Microsoft 365)</div>
+  </div>
+  <div class="step-body">
+    <div class="placeholder">영상 준비 중</div>
+    <div class="nodes">
+      <span class="node-tag cred">A. Excel Get Rows</span>
+      <span style="color:var(--muted); margin: 0 8px;">또는</span>
+      <span class="node-tag cred">B. Outlook Send Email</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
