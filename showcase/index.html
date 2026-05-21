@@ -708,80 +708,69 @@
     font-size: 18px;
   }
 
-  /* ── My Workflows ──────────────────────────────────── */
-  .my-wf-section {
-    margin-bottom: 32px;
+  /* ── My Workflows (inline chips) ─────────────────── */
+  .wf-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
   }
+  .wf-upload-btn:hover { opacity: 0.85; }
+  .wf-upload-btn:disabled { opacity: 0.4; cursor: default; }
 
-  .my-wf-slots {
+  .my-wf-chips {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
+    margin-top: 10px;
   }
 
-  .my-wf-slot {
-    flex: 1;
-    min-width: 160px;
+  .my-wf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 16px;
-    text-align: center;
-  }
-
-  .my-wf-slot.empty {
-    border-style: dashed;
-    color: var(--text-dim);
-    font-size: 14px;
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-  }
-
-  .my-wf-slot.empty:hover {
-    border-color: var(--accent);
-    background: rgba(108,126,225,0.04);
-  }
-
-  .my-wf-slot .slot-name {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
     color: var(--text-bright);
-    margin-bottom: 8px;
-    word-break: break-all;
   }
 
-  .my-wf-slot .slot-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-  }
-
-  .my-wf-slot .slot-actions a,
-  .my-wf-slot .slot-actions button {
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-size: 12px;
+  .my-wf-chip .chip-name {
     font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    text-decoration: none;
-    transition: background 0.15s;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .my-wf-slot .slot-dl {
-    background: var(--bg-card);
+  .my-wf-chip a {
     color: var(--accent-light);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
   }
+  .my-wf-chip a:hover { text-decoration: underline; }
 
-  .my-wf-slot .slot-dl:hover { background: var(--bg-card-hover); }
-
-  .my-wf-slot .slot-del {
-    background: var(--bg-card);
+  .my-wf-chip .chip-del {
+    background: none;
+    border: none;
     color: #f85149;
-    border-color: rgba(248,81,73,0.3);
+    font-size: 15px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
   }
-
-  .my-wf-slot .slot-del:hover { background: rgba(248,81,73,0.08); }
+  .my-wf-chip .chip-del:hover { opacity: 0.7; }
 
   /* ── Upload Modal ───────────────────────────────────── */
   .upload-btn {
@@ -2508,23 +2497,20 @@ function selectTeam(idx) {
       </div>
     </div>
 
-    ${SHOW_JSON_DOWNLOAD ? `<div class="json-actions">
-      <a class="json-download" href="json/${item.gif_file.replace('.gif', '.json')}" download>
+    <div class="json-actions">
+      ${SHOW_JSON_DOWNLOAD ? `<a class="json-download" href="json/${item.gif_file.replace('.gif', '.json')}" download>
         <span class="dl-icon">&#128229;</span>강사 워크플로우 JSON
-      </a>
-    </div>` : ''}
-
-    <div class="my-wf-section">
-      <div class="section-title">내 워크플로우 (최대 3개)</div>
-      <div class="my-wf-slots" id="myWfSlots"></div>
+      </a>` : ''}
+      <button class="wf-upload-btn" onclick="openUpload()">&#11014; 내 워크플로우 업로드</button>
     </div>
+    <div class="my-wf-chips" id="myWfChips"></div>
 
     ${overviewHtml}
     ${formHtml}
     ${flowHtml}
     ${reqHtml}
   `;
-  renderMySlots();
+  renderMyChips();
 }
 
 // ── GIF Modal ────────────────────────────────────────
@@ -2611,54 +2597,62 @@ sidebarToggle.addEventListener('click', () => {
 const savedSidebar = localStorage.getItem('showcase-sidebar');
 if (savedSidebar === 'collapsed') sidebarEl.classList.add('collapsed');
 
-// ── Upload (3-slot system) ───────────────────────────
+// ── Upload (per-team, max 3) ─────────────────────────
 const _t = ['github_pat_11ANJ6R2A0hdqm','Jrq1nXN8_AD8F6lCLQEcN6','GJHSAGMKu8Wn2gVag4QH','HsiOQT78fUA4HYF6KBtBria9DZ'];
 const GITHUB_TOKEN = _t.join('');
 const GITHUB_REPO = 'alsrl8/sample-files-for-n8n-practice';
-const UPLOAD_PATH = 'showcase/uploads';
-const MAX_SLOTS = 3;
-const LS_KEY = 'showcase-my-wf';
+const UPLOAD_BASE = 'showcase/uploads';
+const MAX_PER_TEAM = 3;
+const LS_KEY = 'showcase-my-wf-v2';
 
-function getMyWfs() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-  catch { return []; }
+function teamKey() {
+  if (activeIdx < 0) return null;
+  return DATA[activeIdx].gif_file.match(/^\d+/)?.[0] || String(activeIdx);
 }
-function saveMyWfs(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
 
-function renderMySlots() {
-  const container = document.getElementById('myWfSlots');
+function getAllUploads() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+  catch { return {}; }
+}
+function getTeamUploads() {
+  const k = teamKey();
+  return k ? (getAllUploads()[k] || []) : [];
+}
+function saveTeamUploads(arr) {
+  const all = getAllUploads();
+  const k = teamKey();
+  if (!k) return;
+  if (arr.length === 0) delete all[k]; else all[k] = arr;
+  localStorage.setItem(LS_KEY, JSON.stringify(all));
+}
+
+function renderMyChips() {
+  const container = document.getElementById('myWfChips');
   if (!container) return;
-  const wfs = getMyWfs();
-  let html = '';
-  for (let i = 0; i < MAX_SLOTS; i++) {
-    if (wfs[i]) {
-      const w = wfs[i];
-      html += `<div class="my-wf-slot filled">
-        <div class="slot-name">${esc(w.filename)}</div>
-        <div class="slot-actions">
-          <a class="slot-dl" href="https://raw.githubusercontent.com/${GITHUB_REPO}/main/${w.path}" download="${esc(w.filename)}">다운로드</a>
-          <button class="slot-del" onclick="deleteSlot(${i})">삭제</button>
-        </div>
-      </div>`;
-    } else {
-      html += `<div class="my-wf-slot empty" onclick="openUpload()">+ 업로드</div>`;
-    }
-  }
-  container.innerHTML = html;
+  const wfs = getTeamUploads();
+  const btn = container.parentElement.querySelector('.wf-upload-btn');
+  if (btn) btn.disabled = wfs.length >= MAX_PER_TEAM;
+  if (wfs.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = wfs.map((w, i) => `<div class="my-wf-chip">
+    <span class="chip-name" title="${esc(w.filename)}">${esc(w.filename)}</span>
+    <a href="https://raw.githubusercontent.com/${GITHUB_REPO}/main/${w.path}" download="${esc(w.filename)}">다운로드</a>
+    <button class="chip-del" onclick="deleteUpload(${i})" title="삭제">&times;</button>
+  </div>`).join('');
 }
 
 function openUpload() {
-  const wfs = getMyWfs();
-  if (wfs.length >= MAX_SLOTS) {
-    alert('슬롯이 가득 찼습니다. 기존 워크플로우를 삭제한 후 업로드하세요.');
+  if (activeIdx < 0) { alert('먼저 팀을 선택하세요.'); return; }
+  const wfs = getTeamUploads();
+  if (wfs.length >= MAX_PER_TEAM) {
+    alert(`이 팀의 업로드가 ${MAX_PER_TEAM}개에 도달했습니다. 기존 파일을 삭제한 후 업로드하세요.`);
     return;
   }
   uploadModal.classList.add('open');
   resetUpload();
 }
 
-async function deleteSlot(idx) {
-  const wfs = getMyWfs();
+async function deleteUpload(idx) {
+  const wfs = getTeamUploads();
   const target = wfs[idx];
   if (!target) return;
   if (!confirm(`"${target.filename}" 을(를) 삭제하시겠습니까?`)) return;
@@ -2681,8 +2675,8 @@ async function deleteSlot(idx) {
   } catch {}
 
   wfs.splice(idx, 1);
-  saveMyWfs(wfs);
-  renderMySlots();
+  saveTeamUploads(wfs);
+  renderMyChips();
 }
 
 const uploadModal = document.getElementById('uploadModal');
@@ -2744,13 +2738,14 @@ uploadName.addEventListener('input', () => {
 });
 
 uploadSubmit.addEventListener('click', async () => {
-  if (!uploadContent || !uploadName.value.trim()) return;
+  if (!uploadContent || !uploadName.value.trim() || activeIdx < 0) return;
   uploadSubmit.disabled = true;
   uploadSubmit.textContent = '업로드 중...';
 
-  const wfs = getMyWfs();
+  const wfs = getTeamUploads();
+  const tk = teamKey();
 
-  if (wfs.length >= MAX_SLOTS) {
+  if (wfs.length >= MAX_PER_TEAM) {
     const oldest = wfs.shift();
     try {
       let sha = oldest.sha;
@@ -2768,16 +2763,16 @@ uploadSubmit.addEventListener('click', async () => {
         });
       }
     } catch {}
-    saveMyWfs(wfs);
+    saveTeamUploads(wfs);
   }
 
   const filename = uploadName.value.trim().replace(/\.json$/, '') + '.json';
   const ts = Date.now();
-  const path = `${UPLOAD_PATH}/${ts}-${filename}`;
+  const path = `${UPLOAD_BASE}/${tk}/${ts}-${filename}`;
 
   try {
     const body = {
-      message: `Upload workflow: ${filename}`,
+      message: `Upload workflow: ${filename} (team ${tk})`,
       content: btoa(unescape(encodeURIComponent(uploadContent)))
     };
 
@@ -2790,8 +2785,8 @@ uploadSubmit.addEventListener('click', async () => {
     if (res.ok) {
       const data = await res.json();
       wfs.push({ filename, path, timestamp: ts, sha: data.content.sha });
-      saveMyWfs(wfs);
-      renderMySlots();
+      saveTeamUploads(wfs);
+      renderMyChips();
       showStatus(`${filename} 업로드 완료!`, 'success');
       uploadSubmit.textContent = '완료';
       setTimeout(() => { uploadModal.classList.remove('open'); }, 1500);
