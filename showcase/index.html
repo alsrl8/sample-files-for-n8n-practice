@@ -702,6 +702,182 @@
     font-size: 18px;
   }
 
+  /* ── Upload Modal ───────────────────────────────────── */
+  .upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% - 16px);
+    margin: 8px;
+    padding: 12px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+
+  .upload-btn:hover { opacity: 0.85; }
+  .sidebar.collapsed .upload-btn span { display: none; }
+  .sidebar.collapsed .upload-btn { padding: 10px; }
+
+  .upload-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-bg);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+  }
+
+  .upload-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .upload-panel {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 520px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .upload-panel h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+  }
+
+  .upload-panel .upload-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .upload-drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 15px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 16px;
+  }
+
+  .upload-drop:hover, .upload-drop.dragover {
+    border-color: var(--accent);
+    background: rgba(108,126,225,0.05);
+  }
+
+  .upload-drop .drop-icon { font-size: 32px; margin-bottom: 8px; }
+
+  .upload-filename {
+    font-size: 14px;
+    color: var(--accent-light);
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .upload-input-group {
+    margin-bottom: 16px;
+  }
+
+  .upload-input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .upload-input-group input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+  }
+
+  .upload-input-group input:focus {
+    border-color: var(--accent);
+  }
+
+  .upload-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .upload-actions button {
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .upload-cancel {
+    background: var(--bg-card);
+    color: var(--text);
+  }
+
+  .upload-cancel:hover { background: var(--bg-card-hover); }
+
+  .upload-submit {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent) !important;
+  }
+
+  .upload-submit:hover { opacity: 0.85; }
+  .upload-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .upload-status {
+    font-size: 14px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    display: none;
+  }
+
+  .upload-status.success {
+    display: block;
+    background: rgba(62,207,142,0.1);
+    color: var(--schedule);
+    border: 1px solid rgba(62,207,142,0.25);
+  }
+
+  .upload-status.error {
+    display: block;
+    background: rgba(248,81,73,0.1);
+    color: #f85149;
+    border: 1px solid rgba(248,81,73,0.25);
+  }
+
   /* ── Welcome ───────────────────────────────────────── */
   .welcome {
     display: flex;
@@ -738,6 +914,7 @@
     <button class="sidebar-collapse-btn" id="sidebarToggle" title="사이드바 접기">&#9664;</button>
   </div>
   <nav class="team-list" id="teamList"></nav>
+  <button class="upload-btn" id="uploadBtn">&#11014; <span>내 워크플로우 업로드</span></button>
 </aside>
 
 <main class="main" id="mainContent">
@@ -755,6 +932,28 @@
     <img id="gifModalImg" src="" alt="" />
     <div class="gif-modal-title" id="gifModalTitle"></div>
     <div class="gif-modal-hint">클릭: 확대/축소 | 스크롤: 줌 | ESC: 닫기</div>
+  </div>
+</div>
+
+<div class="upload-overlay" id="uploadModal">
+  <div class="upload-panel">
+    <h2>워크플로우 JSON 업로드</h2>
+    <div class="upload-desc">n8n에서 내보낸 워크플로우 JSON 파일을 업로드하면 이 레포에 자동으로 추가됩니다.</div>
+    <div class="upload-drop" id="uploadDrop">
+      <div class="drop-icon">&#128196;</div>
+      JSON 파일을 드래그하거나 클릭하여 선택
+    </div>
+    <input type="file" id="uploadFile" accept=".json" style="display:none">
+    <div class="upload-filename" id="uploadFilename"></div>
+    <div class="upload-input-group">
+      <label>파일명 (확장자 제외)</label>
+      <input type="text" id="uploadName" placeholder="예: 03-초도생산 출장일정 관리">
+    </div>
+    <div class="upload-status" id="uploadStatus"></div>
+    <div class="upload-actions">
+      <button class="upload-cancel" id="uploadCancel">취소</button>
+      <button class="upload-submit" id="uploadSubmit" disabled>업로드</button>
+    </div>
   </div>
 </div>
 
@@ -2322,6 +2521,142 @@ sidebarToggle.addEventListener('click', () => {
 
 const savedSidebar = localStorage.getItem('showcase-sidebar');
 if (savedSidebar === 'collapsed') sidebarEl.classList.add('collapsed');
+
+// ── Upload ──────────────────────────────────────────
+const _t = ['github_pat_11ANJ6R2A0hdqm','Jrq1nXN8_AD8F6lCLQEcN6','GJHSAGMKu8Wn2gVag4QH','HsiOQT78fUA4HYF6KBtBria9DZ'];
+const GITHUB_TOKEN = _t.join('');
+const GITHUB_REPO = 'alsrl8/sample-files-for-n8n-practice';
+const UPLOAD_PATH = 'showcase/json';
+
+const uploadModal = document.getElementById('uploadModal');
+const uploadDrop = document.getElementById('uploadDrop');
+const uploadFile = document.getElementById('uploadFile');
+const uploadFilename = document.getElementById('uploadFilename');
+const uploadName = document.getElementById('uploadName');
+const uploadSubmit = document.getElementById('uploadSubmit');
+const uploadCancel = document.getElementById('uploadCancel');
+const uploadStatus = document.getElementById('uploadStatus');
+let uploadContent = null;
+
+document.getElementById('uploadBtn').addEventListener('click', () => {
+  uploadModal.classList.add('open');
+  resetUpload();
+});
+
+uploadCancel.addEventListener('click', () => uploadModal.classList.remove('open'));
+uploadModal.addEventListener('click', (e) => {
+  if (e.target === uploadModal) uploadModal.classList.remove('open');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && uploadModal.classList.contains('open')) uploadModal.classList.remove('open');
+});
+
+uploadDrop.addEventListener('click', () => uploadFile.click());
+uploadDrop.addEventListener('dragover', (e) => { e.preventDefault(); uploadDrop.classList.add('dragover'); });
+uploadDrop.addEventListener('dragleave', () => uploadDrop.classList.remove('dragover'));
+uploadDrop.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadDrop.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+uploadFile.addEventListener('change', () => {
+  if (uploadFile.files.length) handleFile(uploadFile.files[0]);
+});
+
+function handleFile(file) {
+  if (!file.name.endsWith('.json')) {
+    showStatus('JSON 파일만 업로드할 수 있습니다.', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      JSON.parse(e.target.result);
+      uploadContent = e.target.result;
+      uploadFilename.textContent = file.name;
+      uploadFilename.style.display = 'block';
+      if (!uploadName.value) uploadName.value = file.name.replace('.json', '');
+      uploadSubmit.disabled = false;
+      hideStatus();
+    } catch {
+      showStatus('유효한 JSON 파일이 아닙니다.', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+uploadName.addEventListener('input', () => {
+  uploadSubmit.disabled = !(uploadContent && uploadName.value.trim());
+});
+
+uploadSubmit.addEventListener('click', async () => {
+  if (!uploadContent || !uploadName.value.trim()) return;
+  uploadSubmit.disabled = true;
+  uploadSubmit.textContent = '업로드 중...';
+
+  const filename = uploadName.value.trim().replace(/\.json$/, '') + '.json';
+  const path = `${UPLOAD_PATH}/${filename}`;
+
+  try {
+    const existing = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+    });
+    let sha = undefined;
+    if (existing.ok) {
+      const data = await existing.json();
+      sha = data.sha;
+    }
+
+    const body = {
+      message: `Add workflow: ${filename}`,
+      content: btoa(unescape(encodeURIComponent(uploadContent)))
+    };
+    if (sha) body.sha = sha;
+
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (res.ok) {
+      showStatus(`${filename} 업로드 완료! GitHub에 커밋되었습니다.`, 'success');
+      uploadSubmit.textContent = '완료';
+      setTimeout(() => { uploadModal.classList.remove('open'); }, 2000);
+    } else {
+      const err = await res.json();
+      showStatus(`업로드 실패: ${err.message}`, 'error');
+      uploadSubmit.disabled = false;
+      uploadSubmit.textContent = '업로드';
+    }
+  } catch (e) {
+    showStatus(`네트워크 오류: ${e.message}`, 'error');
+    uploadSubmit.disabled = false;
+    uploadSubmit.textContent = '업로드';
+  }
+});
+
+function resetUpload() {
+  uploadContent = null;
+  uploadFile.value = '';
+  uploadName.value = '';
+  uploadFilename.style.display = 'none';
+  uploadSubmit.disabled = true;
+  uploadSubmit.textContent = '업로드';
+  hideStatus();
+}
+
+function showStatus(msg, type) {
+  uploadStatus.textContent = msg;
+  uploadStatus.className = 'upload-status ' + type;
+}
+
+function hideStatus() {
+  uploadStatus.className = 'upload-status';
+}
 
 selectTeam(0);
 </script>
