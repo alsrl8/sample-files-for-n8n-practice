@@ -677,6 +677,13 @@
   }
 
   /* ── JSON Download ──────────────────────────────────── */
+  .json-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
   .json-download {
     display: inline-flex;
     align-items: center;
@@ -689,7 +696,6 @@
     font-size: 15px;
     font-weight: 600;
     text-decoration: none;
-    margin-bottom: 32px;
     transition: background 0.15s, border-color 0.15s;
   }
 
@@ -701,6 +707,81 @@
   .json-download .dl-icon {
     font-size: 18px;
   }
+
+  /* ── My Workflows ──────────────────────────────────── */
+  .my-wf-section {
+    margin-bottom: 32px;
+  }
+
+  .my-wf-slots {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .my-wf-slot {
+    flex: 1;
+    min-width: 160px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .my-wf-slot.empty {
+    border-style: dashed;
+    color: var(--text-dim);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .my-wf-slot.empty:hover {
+    border-color: var(--accent);
+    background: rgba(108,126,225,0.04);
+  }
+
+  .my-wf-slot .slot-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+
+  .my-wf-slot .slot-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .my-wf-slot .slot-actions a,
+  .my-wf-slot .slot-actions button {
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .my-wf-slot .slot-dl {
+    background: var(--bg-card);
+    color: var(--accent-light);
+  }
+
+  .my-wf-slot .slot-dl:hover { background: var(--bg-card-hover); }
+
+  .my-wf-slot .slot-del {
+    background: var(--bg-card);
+    color: #f85149;
+    border-color: rgba(248,81,73,0.3);
+  }
+
+  .my-wf-slot .slot-del:hover { background: rgba(248,81,73,0.08); }
 
   /* ── Upload Modal ───────────────────────────────────── */
   .upload-btn {
@@ -2427,15 +2508,23 @@ function selectTeam(idx) {
       </div>
     </div>
 
-    ${SHOW_JSON_DOWNLOAD ? `<a class="json-download" href="json/${item.gif_file.replace('.gif', '.json')}" download>
-      <span class="dl-icon">&#128229;</span>워크플로우 JSON 다운로드
-    </a>` : ''}
+    ${SHOW_JSON_DOWNLOAD ? `<div class="json-actions">
+      <a class="json-download" href="json/${item.gif_file.replace('.gif', '.json')}" download>
+        <span class="dl-icon">&#128229;</span>강사 워크플로우 JSON
+      </a>
+    </div>` : ''}
+
+    <div class="my-wf-section">
+      <div class="section-title">내 워크플로우 (최대 3개)</div>
+      <div class="my-wf-slots" id="myWfSlots"></div>
+    </div>
 
     ${overviewHtml}
     ${formHtml}
     ${flowHtml}
     ${reqHtml}
   `;
+  renderMySlots();
 }
 
 // ── GIF Modal ────────────────────────────────────────
@@ -2522,11 +2611,79 @@ sidebarToggle.addEventListener('click', () => {
 const savedSidebar = localStorage.getItem('showcase-sidebar');
 if (savedSidebar === 'collapsed') sidebarEl.classList.add('collapsed');
 
-// ── Upload ──────────────────────────────────────────
+// ── Upload (3-slot system) ───────────────────────────
 const _t = ['github_pat_11ANJ6R2A0hdqm','Jrq1nXN8_AD8F6lCLQEcN6','GJHSAGMKu8Wn2gVag4QH','HsiOQT78fUA4HYF6KBtBria9DZ'];
 const GITHUB_TOKEN = _t.join('');
 const GITHUB_REPO = 'alsrl8/sample-files-for-n8n-practice';
-const UPLOAD_PATH = 'showcase/json';
+const UPLOAD_PATH = 'showcase/uploads';
+const MAX_SLOTS = 3;
+const LS_KEY = 'showcase-my-wf';
+
+function getMyWfs() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+  catch { return []; }
+}
+function saveMyWfs(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+
+function renderMySlots() {
+  const container = document.getElementById('myWfSlots');
+  if (!container) return;
+  const wfs = getMyWfs();
+  let html = '';
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    if (wfs[i]) {
+      const w = wfs[i];
+      html += `<div class="my-wf-slot filled">
+        <div class="slot-name">${esc(w.filename)}</div>
+        <div class="slot-actions">
+          <a class="slot-dl" href="https://raw.githubusercontent.com/${GITHUB_REPO}/main/${w.path}" download="${esc(w.filename)}">다운로드</a>
+          <button class="slot-del" onclick="deleteSlot(${i})">삭제</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="my-wf-slot empty" onclick="openUpload()">+ 업로드</div>`;
+    }
+  }
+  container.innerHTML = html;
+}
+
+function openUpload() {
+  const wfs = getMyWfs();
+  if (wfs.length >= MAX_SLOTS) {
+    alert('슬롯이 가득 찼습니다. 기존 워크플로우를 삭제한 후 업로드하세요.');
+    return;
+  }
+  uploadModal.classList.add('open');
+  resetUpload();
+}
+
+async function deleteSlot(idx) {
+  const wfs = getMyWfs();
+  const target = wfs[idx];
+  if (!target) return;
+  if (!confirm(`"${target.filename}" 을(를) 삭제하시겠습니까?`)) return;
+
+  try {
+    let sha = target.sha;
+    if (!sha) {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${target.path}`, {
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+      });
+      if (res.ok) sha = (await res.json()).sha;
+    }
+    if (sha) {
+      await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${target.path}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Remove upload: ${target.filename}`, sha })
+      });
+    }
+  } catch {}
+
+  wfs.splice(idx, 1);
+  saveMyWfs(wfs);
+  renderMySlots();
+}
 
 const uploadModal = document.getElementById('uploadModal');
 const uploadDrop = document.getElementById('uploadDrop');
@@ -2538,10 +2695,7 @@ const uploadCancel = document.getElementById('uploadCancel');
 const uploadStatus = document.getElementById('uploadStatus');
 let uploadContent = null;
 
-document.getElementById('uploadBtn').addEventListener('click', () => {
-  uploadModal.classList.add('open');
-  resetUpload();
-});
+document.getElementById('uploadBtn').addEventListener('click', () => openUpload());
 
 uploadCancel.addEventListener('click', () => uploadModal.classList.remove('open'));
 uploadModal.addEventListener('click', (e) => {
@@ -2594,38 +2748,53 @@ uploadSubmit.addEventListener('click', async () => {
   uploadSubmit.disabled = true;
   uploadSubmit.textContent = '업로드 중...';
 
+  const wfs = getMyWfs();
+
+  if (wfs.length >= MAX_SLOTS) {
+    const oldest = wfs.shift();
+    try {
+      let sha = oldest.sha;
+      if (!sha) {
+        const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${oldest.path}`, {
+          headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        });
+        if (r.ok) sha = (await r.json()).sha;
+      }
+      if (sha) {
+        await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${oldest.path}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Remove oldest upload: ${oldest.filename}`, sha })
+        });
+      }
+    } catch {}
+    saveMyWfs(wfs);
+  }
+
   const filename = uploadName.value.trim().replace(/\.json$/, '') + '.json';
-  const path = `${UPLOAD_PATH}/${filename}`;
+  const ts = Date.now();
+  const path = `${UPLOAD_PATH}/${ts}-${filename}`;
 
   try {
-    const existing = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`, {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-    });
-    let sha = undefined;
-    if (existing.ok) {
-      const data = await existing.json();
-      sha = data.sha;
-    }
-
     const body = {
-      message: `Add workflow: ${filename}`,
+      message: `Upload workflow: ${filename}`,
       content: btoa(unescape(encodeURIComponent(uploadContent)))
     };
-    if (sha) body.sha = sha;
 
-    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`, {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
 
     if (res.ok) {
-      showStatus(`${filename} 업로드 완료! GitHub에 커밋되었습니다.`, 'success');
+      const data = await res.json();
+      wfs.push({ filename, path, timestamp: ts, sha: data.content.sha });
+      saveMyWfs(wfs);
+      renderMySlots();
+      showStatus(`${filename} 업로드 완료!`, 'success');
       uploadSubmit.textContent = '완료';
-      setTimeout(() => { uploadModal.classList.remove('open'); }, 2000);
+      setTimeout(() => { uploadModal.classList.remove('open'); }, 1500);
     } else {
       const err = await res.json();
       showStatus(`업로드 실패: ${err.message}`, 'error');
