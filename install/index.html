@@ -100,8 +100,17 @@
   </div>
 
   <div class="step">
-    <div class="step-label">Step 4. 설치 확인</div>
-    <div class="step-desc">CMD를 다시 닫고 새로 열어주세요</div>
+    <div class="step-label">Step 4. PATH 등록</div>
+    <div class="step-desc">claude 명령을 어디서든 사용할 수 있도록 경로를 등록합니다</div>
+    <div class="cmd-wrap">
+      <code>setx PATH "%PATH%;%USERPROFILE%\.local\bin"</code>
+      <button onclick="copyCmd(this)">복사</button>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-label">Step 5. 설치 확인</div>
+    <div class="step-desc">CMD를 닫고 새로 열어주세요</div>
     <div class="cmd-wrap">
       <code>claude --version</code>
       <button onclick="copyCmd(this)">복사</button>
